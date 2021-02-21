@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:pages="clr-namespace:Genshin_Impact_Tasks.Pages"
+             x:Class="Genshin_Impact_Tasks.MainPage">
+    <StackLayout>
+        <Frame BackgroundColor="#2196F3" Padding="24">
+            <Grid Margin="-10,-10,0,0">
+                <StackLayout Orientation="Horizontal" Margin="0">
+                    <Image x:Name="CurrentTabImage" Source="Resources/task.png" HeightRequest="15" />
+                    <Label x:Name="CurrentTabTitle" Text="할 일" FontSize="Default" TextColor="White" VerticalTextAlignment="Center" />
+                </StackLayout>
+            
+                <Label x:Name="CurrentDateText" Text="Loading ..." Grid.RowSpan="3" FontAttributes="Bold" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" TextColor="White" FontSize="36"/>
+            </Grid>
+        </Frame>
+
+        <Button x:Name="TabDropdownButton" Text="▼" FontSize="Medium" CornerRadius="5" ClassId="Hide" Clicked="TabDropdownButton_Clicked" Margin="5,0" />
+
+        <Grid x:Name="Tab" IsVisible="False" Margin="5,0" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <Button x:Name="TaskTab" Text="할 일" Grid.Column="0" CornerRadius="5" ContentLayout="Top" Image="Resources/task.png" BindingContext="Task" Clicked="NavigateTab_Clicked" />
+            <Button x:Name="DomainsTab" Text="비경" Grid.Column="1" CornerRadius="5" ContentLayout="Top" Image="Resources/domains.png" BindingContext="Domains" Clicked="NavigateTab_Clicked" />
+        </Grid>
+    </StackLayout>
+</ContentPage>
