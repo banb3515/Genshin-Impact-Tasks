@@ -47,6 +47,4 @@
 
 > ### **다운로드**
 >
-> - [다운로드 링크](https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf) 
-> - 삭제 방법
->   - 삭제 방법 상세 설명
+> 개발 중
