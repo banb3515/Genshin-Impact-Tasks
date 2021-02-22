@@ -1,6 +1,4 @@
-﻿using Genshin_Impact_Tasks.Pages;
-
-using System;
+﻿using System;
 
 using Xamarin.Forms;
 
@@ -17,9 +15,9 @@ namespace Genshin_Impact_Tasks
 
         #region Global Function
         #region 예외(오류) 표시 함수
-        public static void DisplayEx(Exception ex, Page page)
+        public static void DisplayEx(Exception ex)
         {
-            page.DisplayAlert("Exception", $"오류가 발생하였습니다.\n- {ex.Message}", "확인");
+            Current.MainPage.DisplayAlert("Exception", $"오류가 발생하였습니다.\n- {ex.Message}", "확인");
         }
         #endregion
         #endregion
