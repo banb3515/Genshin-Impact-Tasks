@@ -1,5 +1,7 @@
-﻿using System;
-using System.Diagnostics;
+﻿using SQLite;
+
+using System;
+using System.IO;
 
 using Xamarin.Forms;
 
@@ -119,17 +121,10 @@ namespace Genshin_Impact_Tasks
         {
             try
             {
-                var button = (sender as Button);
-
-                switch (button.ClassId)
-                {
-                    case "Show":
-                        HideTabList();
-                        break;
-                    case "Hide":
-                        ShowTabList();
-                        break;
-                }
+                if (TabBar.IsVisible)
+                    HideTabList();
+                else
+                    ShowTabList();
             }
             catch (Exception ex)
             {
@@ -141,9 +136,9 @@ namespace Genshin_Impact_Tasks
         #region 탭 목록 보기
         private async void ShowTabList()
         {
-            Test.RowDefinitions[2].Height = 80;
+            TabListDropdownBtn.Text = "▲";
+            Test.RowDefinitions[2].Height = 60;
 
-            TabListDropdownBtn.ClassId = "Show";
             TabListDropdownBtn.IsEnabled = false;
             TabBar.IsVisible = true;
             EnableTabButton(false);
@@ -168,7 +163,6 @@ namespace Genshin_Impact_Tasks
 
             TabListDropdownBtn.IsEnabled = true;
             EnableTabButton();
-            TabListDropdownBtn.Text = "▲";
 
             switch (CurrentTabTitle.Text)
             {
@@ -188,7 +182,7 @@ namespace Genshin_Impact_Tasks
         #region 탭 목록 숨기기
         private async void HideTabList()
         {
-            TabListDropdownBtn.ClassId = "Hide";
+            TabListDropdownBtn.Text = "▼";
             TabListDropdownBtn.IsEnabled = false;
             EnableTabButton(false);
             _ = TabBar.TranslateTo(0, -50, 250, Easing.CubicIn);
@@ -209,7 +203,6 @@ namespace Genshin_Impact_Tasks
             TabBar.IsVisible = false;
             TabListDropdownBtn.IsEnabled = true;
             EnableTabButton();
-            TabListDropdownBtn.Text = "▼";
 
             switch (CurrentTabTitle.Text)
             {
@@ -246,7 +239,7 @@ namespace Genshin_Impact_Tasks
         #endregion
 
         #region 탭 이동
-        private async void NavigateTab_Clicked(object sender, EventArgs e)
+        private void NavigateTab_Clicked(object sender, EventArgs e)
         {
             try
             {
@@ -264,7 +257,7 @@ namespace Genshin_Impact_Tasks
                         TimerTab.IsVisible = false;
                         break;
                     case "Domains":
-                        CurrentTabImage.Source = "Resources/domains.png";
+                        CurrentTabImage.Source = "Resources/waypoint_domains.png";
                         CurrentTabTitle.Text = "비경";
 
                         TaskTab.IsVisible = false;
@@ -281,43 +274,7 @@ namespace Genshin_Impact_Tasks
                         break;
                 }
 
-                TabListDropdownBtn.ClassId = "Hide";
-                TabListDropdownBtn.IsEnabled = false;
-                EnableTabButton(false);
-                _ = TabBar.TranslateTo(0, -50, 250, Easing.CubicIn);
-
-                switch (tab)
-                {
-                    case "Task":
-                        await TaskTab.TranslateTo(0, -50, 250, Easing.CubicIn);
-                        break;
-                    case "Domains":
-                        await DomainsTab.TranslateTo(0, -50, 250, Easing.CubicIn);
-                        break;
-                    case "Timer":
-                        await TimerTab.TranslateTo(0, -50, 250, Easing.CubicIn);
-                        break;
-                }
-
-                TabBar.IsVisible = false;
-                TabListDropdownBtn.IsEnabled = true;
-                EnableTabButton();
-                TabListDropdownBtn.Text = "▼";
-
-                switch (tab)
-                {
-                    case "Task":
-                        await TaskTab.TranslateTo(0, 0, 0);
-                        break;
-                    case "Domains":
-                        await DomainsTab.TranslateTo(0, 0, 0);
-                        break;
-                    case "Timer":
-                        await TimerTab.TranslateTo(0, 0, 0);
-                        break;
-                }
-
-                Test.RowDefinitions[2].Height = GridLength.Auto;
+                HideTabList();
             }
             catch (Exception ex)
             {
@@ -329,7 +286,7 @@ namespace Genshin_Impact_Tasks
         #region 상단 프레임 아래로 스와이프 시 탭 목록 보기
         private void TopFrame_DownSwiped(object sender, SwipedEventArgs e)
         {
-            if(TabListDropdownBtn.ClassId == "Hide" && TabListDropdownBtn.IsEnabled)
+            if(!TabBar.IsVisible && TabListDropdownBtn.IsEnabled)
                 ShowTabList();
         }
         #endregion
@@ -337,7 +294,7 @@ namespace Genshin_Impact_Tasks
         #region 상단 프레임 위로 스와이프 시 탭 목록 숨기기
         private void TopFrame_UpSwiped(object sender, SwipedEventArgs e)
         {
-            if (TabListDropdownBtn.ClassId == "Show" && TabListDropdownBtn.IsEnabled)
+            if (TabBar.IsVisible && TabListDropdownBtn.IsEnabled)
                 HideTabList();
         }
         #endregion

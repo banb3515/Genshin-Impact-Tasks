@@ -1,18 +1,13 @@
-﻿using System;
+﻿using Syncfusion.XForms.UWP.TreeView;
+
+using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
+using System.Reflection;
+
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
 namespace Genshin_Impact_Tasks.UWP
@@ -57,7 +52,14 @@ namespace Genshin_Impact_Tasks.UWP
 
                 rootFrame.NavigationFailed += OnNavigationFailed;
 
-                Xamarin.Forms.Forms.Init(e);
+                // Rg.Plugins.Popup 초기화
+                Rg.Plugins.Popup.Popup.Init();
+
+                List<Assembly> assembliesToInclude = (List<Assembly>)Rg.Plugins.Popup.Popup.GetExtraAssemblies();
+
+                assembliesToInclude.Add(typeof(SfTreeViewRenderer).GetTypeInfo().Assembly);
+
+                Xamarin.Forms.Forms.Init(e, assembliesToInclude);
 
                 if (e.PreviousExecutionState == ApplicationExecutionState.Terminated)
                 {

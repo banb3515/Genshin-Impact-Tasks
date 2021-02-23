@@ -7,7 +7,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Genshin-Impact-Tasks.UWP", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Genshin-Impact-Tasks.Android", "Genshin-Impact-Tasks\Genshin-Impact-Tasks.Android\Genshin-Impact-Tasks.Android.csproj", "{4B73F783-D7A9-4901-B422-369103EF0A58}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Genshin-Impact-Tasks", "Genshin-Impact-Tasks\Genshin-Impact-Tasks\Genshin-Impact-Tasks.csproj", "{35EEB8CF-74A8-433A-B140-12D990474226}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Genshin-Impact-Tasks", "Genshin-Impact-Tasks\Genshin-Impact-Tasks\Genshin-Impact-Tasks.csproj", "{35EEB8CF-74A8-433A-B140-12D990474226}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F7CCE4E9-2B93-4300-B2BB-8DA7BF78F4C4}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

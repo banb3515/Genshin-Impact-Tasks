@@ -5,7 +5,7 @@
              x:Class="Genshin_Impact_Tasks.Pages.TaskTabView">
     <ContentView.Resources>
         <ResourceDictionary>
-            <helpers:CompleteColorConverter x:Key="CompleteColor" />
+            <helpers:CompleteColorConverter x:Key="CompleteColorConverter" />
         </ResourceDictionary>
     </ContentView.Resources>
     
@@ -24,12 +24,16 @@
                 </Grid.RowDefinitions>
                 
                 <!-- Title -->
-                <Label x:Name="Title" Grid.Row="0" Text="일일 반복" FontSize="Medium" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center" Margin="0,0,0,5" />
+                <Grid Grid.Row="0" Margin="5,0,5,5">
+                    <Label x:Name="Title" Text="일일 반복" FontSize="Medium" FontAttributes="Bold" TextColor="Black" VerticalOptions="Center" HorizontalOptions="Center" />
+                    <Button Text="추가" Image="Resources/plus.png" HeightRequest="50" WidthRequest="80" ContentLayout="Left" VerticalOptions="Center" HorizontalOptions="End" CornerRadius="15" BorderColor="Black" BorderWidth="0.5" Clicked="AddTaskButton_Clicked" />
+                </Grid>
+                
                 <!-- Divider -->
                 <BoxView x:Name="Line" Grid.Row="1" HeightRequest="1" Color="Black" Margin="5,0" />
-                
-                <!-- #region Daily Tasks -->
-                <ListView x:Name="DailyTasksView" BindingContext="Daily" Grid.Row="2" ItemsSource="{Binding TaskModel}" SelectionMode="None" ItemTapped="TasksView_ItemTapped" HasUnevenRows="True" SeparatorVisibility="None">
+
+                <!-- #region Tasks -->
+                <ListView x:Name="TasksView" Grid.Row="2" ItemsSource="{Binding TaskModel}" SelectionMode="None" ItemTapped="TasksView_ItemTapped" HasUnevenRows="True" SeparatorVisibility="None">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <ViewCell>
@@ -40,59 +44,11 @@
                                         <ColumnDefinition Width="45" />
                                     </Grid.ColumnDefinitions>
 
-                                    <Frame Grid.Column="0" Grid.ColumnSpan="3" BackgroundColor="{Binding Status, Converter={x:StaticResource CompleteColor}}" Opacity="0.75" CornerRadius="20" HasShadow="True" Margin="0,2" />
-    
-                                    <Image Grid.Column="0" Source="{Binding ImagePath}" WidthRequest="30" HeightRequest="30" Margin="15,0,5,0" />
-                                    <Label Grid.Column="1" Text="{Binding Content}" TextColor="Black" FontSize="Small" VerticalTextAlignment="Center" />
-                                    <ImageButton Grid.Column="2" Source="Resources/more.png" BindingContext="{Binding No}" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" Margin="5,0,15,0" Clicked="MoreButton_Clicked" />
-                                </Grid>
-                            </ViewCell>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
-                <!-- #endregion -->
+                                    <Frame Grid.Column="0" Grid.ColumnSpan="3" BackgroundColor="{Binding Status, Converter={x:StaticResource CompleteColorConverter}}" Opacity="0.75" CornerRadius="20" HasShadow="True" Margin="0,2" />
 
-                <!-- #region Weekly Tasks -->
-                <ListView x:Name="WeeklyTasksView" BindingContext="Weekly" Grid.Row="2" IsVisible="False" ItemsSource="{Binding TaskModel}" SelectionMode="None" ItemTapped="TasksView_ItemTapped" HasUnevenRows="True" SeparatorVisibility="None">
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <ViewCell>
-                                <Grid Margin="5">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="50" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="45" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <Frame Grid.Column="0" Grid.ColumnSpan="3" BackgroundColor="{Binding Status, Converter={x:StaticResource CompleteColor}}" Opacity="0.75" CornerRadius="20" HasShadow="True" Margin="0,2" />
-
-                                    <Image Grid.Column="0" Source="{Binding ImagePath}" WidthRequest="30" HeightRequest="30" Margin="15,0,5,0" />
-                                    <Label Grid.Column="1" Text="{Binding Content}" TextColor="Black" FontSize="Small" VerticalTextAlignment="Center" />
-                                    <ImageButton Grid.Column="2" Source="Resources/more.png" BindingContext="{Binding No}" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" Margin="5,0,15,0" Clicked="MoreButton_Clicked" />
-                                </Grid>
-                            </ViewCell>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
-                <!-- #endregion -->
-
-                <!-- #region One Time Tasks -->
-                <ListView x:Name="OneTimeTasksView" BindingContext="OneTime" Grid.Row="2" IsVisible="False" ItemsSource="{Binding TaskModel}" SelectionMode="None" ItemTapped="TasksView_ItemTapped" HasUnevenRows="True" SeparatorVisibility="None">
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <ViewCell>
-                                <Grid Margin="5">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="50" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="45" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <Frame Grid.Column="0" Grid.ColumnSpan="3" BackgroundColor="{Binding Status, Converter={x:StaticResource CompleteColor}}" Opacity="0.75" CornerRadius="20" HasShadow="True" Margin="0,2" />
-
-                                    <Image Grid.Column="0" Source="{Binding ImagePath}" WidthRequest="30" HeightRequest="30" Margin="15,0,5,0" />
-                                    <Label Grid.Column="1" Text="{Binding Content}" TextColor="Black" FontSize="Small" VerticalTextAlignment="Center" />
-                                    <ImageButton Grid.Column="2" Source="Resources/more.png" BindingContext="{Binding No}" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" Margin="5,0,15,0" Clicked="MoreButton_Clicked" />
+                                    <Image Grid.Column="0" Source="{Binding IconPath}" WidthRequest="30" HeightRequest="30" Margin="15,0,5,0" />
+                                    <Label Grid.Column="1" Text="{Binding Content}" TextColor="Black" FontSize="Small" VerticalTextAlignment="Center" Margin="0,2" />
+                                    <ImageButton Grid.Column="2" Source="Resources/more.png" CommandParameter="{Binding Content}" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" Margin="5,0,15,0" Clicked="MoreButton_Clicked" />
                                 </Grid>
                             </ViewCell>
                         </DataTemplate>
