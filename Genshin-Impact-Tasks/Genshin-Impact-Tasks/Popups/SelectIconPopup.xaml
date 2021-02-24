@@ -13,11 +13,13 @@
     
     <rg:PopupPage.Content>
         <Frame x:Name="MainFrame" BackgroundColor="White" Margin="20,40" VerticalOptions="Center" CornerRadius="25" HasShadow="True" BorderColor="Black">
-            <Grid>
-                <Label Text="아이콘 선택" TextColor="{Binding UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" HorizontalOptions="Center" VerticalOptions="Start" FontSize="Medium" FontAttributes="Bold" />
-                <ImageButton Source="Resources/x_mark.png" HorizontalOptions="End" VerticalOptions="Start" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" Clicked="CloseButton_Clicked" />
+            <StackLayout>
+                <Grid HeightRequest="50">
+                    <Label Text="할 일 추가" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" HorizontalOptions="Center" VerticalOptions="Start" FontSize="Medium" FontAttributes="Bold" />
+                    <ImageButton Source="Resources/x_mark.png" HorizontalOptions="End" VerticalOptions="Start" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" WidthRequest="25" Clicked="CloseButton_Clicked" />
+                </Grid>
 
-                <sf:SfTreeView x:Name="IconPickerTreeView" ItemsSource="{Binding IconNode}" ChildPropertyName="SubIcons" ItemTemplateContextType="Node" AutoExpandMode="None" SelectionBackgroundColor="Transparent" SelectionMode="Single" FocusBorderColor="{Binding UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" SelectionChanged="IconPickerTreeView_SelectionChanged" FocusBorderThickness="1" Margin="0,40,0,5">
+                <sf:SfTreeView x:Name="IconPickerTreeView" ItemsSource="{Binding IconNode}" ExpandActionTarget="Node" ChildPropertyName="SubIcons" ItemTemplateContextType="Node" AutoExpandMode="None" SelectionBackgroundColor="Transparent" SelectionMode="Single" FocusBorderColor="{Binding UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" SelectionChanged="IconPickerTreeView_SelectionChanged" FocusBorderThickness="1" Margin="0,40,0,5">
                     <sf:SfTreeView.ItemTemplate>
                         <DataTemplate>
                             <Grid x:Name="grid">
@@ -31,13 +33,13 @@
                                 </Grid>
 
                                 <Grid Grid.Column="1" RowSpacing="1" Padding="1,0,0,0" VerticalOptions="Center">
-                                    <Label LineBreakMode="NoWrap" TextColor="{Binding UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" Text="{Binding Content.Title}" VerticalTextAlignment="Center"/>
+                                    <Label LineBreakMode="NoWrap" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" Text="{Binding Content.Title}" VerticalTextAlignment="Center"/>
                                 </Grid>
                             </Grid>
                         </DataTemplate>
                     </sf:SfTreeView.ItemTemplate>
                 </sf:SfTreeView>
-            </Grid>
+            </StackLayout>
         </Frame>
     </rg:PopupPage.Content>
 </rg:PopupPage>

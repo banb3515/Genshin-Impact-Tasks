@@ -1,4 +1,11 @@
-﻿using Android.App;
+﻿using Genshin_Impact_Tasks.Models;
+
+using SQLite;
+
+using System.IO;
+using System.Linq;
+
+using Android.App;
 using Android.Content.PM;
 using Android.Runtime;
 using Android.OS;
@@ -16,6 +23,30 @@ namespace Genshin_Impact_Tasks.Droid
             InitFontScale();
 
             base.OnCreate(savedInstanceState);
+
+            #region 테마 초기화
+            using (var database = new SQLiteConnection(Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "git.db"),
+                SQLiteOpenFlags.Create | SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.ProtectionComplete))
+            {
+                database.CreateTable<SettingTable>();
+
+                if (database.Table<SettingTable>().ToList().Where(s => s.Key == "Theme").Count() == 0)
+                {
+                    var theme = new SettingTable { Key = "Theme", Value = "System" };
+                    database.Insert(theme);
+                }
+
+                switch (database.Table<SettingTable>().ToList().Where(s => s.Key == "Theme").FirstOrDefault().Value)
+                {
+                    case "Light":
+                        SetTheme(Resource.Style.Base_Theme_AppCompat_Light);
+                        break;
+                    case "Dark":
+                        SetTheme(Resource.Style.Base_Theme_AppCompat);
+                        break;
+                }
+            }
+            #endregion
 
             // 초기화
             Rg.Plugins.Popup.Popup.Init(this);

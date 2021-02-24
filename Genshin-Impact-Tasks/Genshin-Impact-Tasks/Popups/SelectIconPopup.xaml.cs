@@ -14,8 +14,6 @@ namespace Genshin_Impact_Tasks.Popups
 	[XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class SelectIconPopup : PopupPage
     {
-        public bool UseDarkMode { get; set; } = false; // 다크 모드 사용 여부
-
         public ObservableCollection<IconPickerModel> IconNode { get; set; } // 아이콘 노드
 
         public EventHandler<SelectIconResult> OnClosed;
@@ -24,11 +22,9 @@ namespace Genshin_Impact_Tasks.Popups
         {
             try
             {
-                if (App.Current.RequestedTheme == OSAppTheme.Dark) UseDarkMode = true;
-
                 InitializeComponent();
 
-                if (UseDarkMode)
+                if (App.UseDarkMode)
                     MainFrame.BackgroundColor = Color.FromHex("333333");
 
                 // 추후 json으로 변경 예정
@@ -157,7 +153,7 @@ namespace Genshin_Impact_Tasks.Popups
                     IconPath = "Resources/item_story_key.png",
                     SubIcons = new ObservableCollection<IconPickerModel>
                     {
-                        new IconPickerModel { Title = "전설 임무 열쇠", IconPath = "Resources/item_story_key.png", Sub = true },
+                        new IconPickerModel { Title = "전설의 열쇠", IconPath = "Resources/item_story_key.png", Sub = true },
                         new IconPickerModel { Title = "농축 레진", IconPath = "Resources/item_condensed_resin.png", Sub = true }
                     }
                 };
@@ -179,6 +175,7 @@ namespace Genshin_Impact_Tasks.Popups
                 #region 노드 추가/적용
                 node.Add(bossNode);
                 node.Add(npcNode);
+                node.Add(enemyNode);
                 node.Add(experienceNode);
                 node.Add(eyesNode);
                 node.Add(questNode);
@@ -205,7 +202,7 @@ namespace Genshin_Impact_Tasks.Popups
             {
                 var item = IconPickerTreeView.CurrentItem as IconPickerModel;
 
-                // 하위 노드인 경우에만 선택 완료 후 팝업 닫기
+                // 하위 노드인 경우 선택 완료 후 팝업 닫기
                 if (item.Sub)
                 {
                     OnClosed?.Invoke(this, new SelectIconResult { IconPath = item.IconPath });

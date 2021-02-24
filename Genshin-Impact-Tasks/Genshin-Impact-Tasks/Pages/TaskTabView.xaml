@@ -6,6 +6,7 @@
     <ContentView.Resources>
         <ResourceDictionary>
             <helpers:CompleteColorConverter x:Key="CompleteColorConverter" />
+            <helpers:UseDarkModeConverter x:Key="UseDarkModeConverter" />
         </ResourceDictionary>
     </ContentView.Resources>
     
@@ -25,15 +26,26 @@
                 
                 <!-- Title -->
                 <Grid Grid.Row="0" Margin="5,0,5,5">
-                    <Label x:Name="Title" Text="일일 반복" FontSize="Medium" FontAttributes="Bold" TextColor="Black" VerticalOptions="Center" HorizontalOptions="Center" />
-                    <Button Text="추가" Image="Resources/plus.png" HeightRequest="50" WidthRequest="80" ContentLayout="Left" VerticalOptions="Center" HorizontalOptions="End" CornerRadius="15" BorderColor="Black" BorderWidth="0.5" Clicked="AddTaskButton_Clicked" />
+                    <Button x:Name="OTTCompleteListButton" Text="완료 보기" IsVisible="False" HeightRequest="50" WidthRequest="120"  VerticalOptions="Center" HorizontalOptions="Start" CornerRadius="15" BorderColor="Black" BorderWidth="0.5" Clicked="OTTCompleteListButton_Clicked" />
+                    <Label x:Name="Title" Text="일일 반복" FontSize="Medium" FontAttributes="Bold" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" VerticalOptions="Center" HorizontalOptions="Center" />
+                    <Button Text="추가" Image="Resources/plus_small.png" HeightRequest="50" WidthRequest="120" ContentLayout="Left" VerticalOptions="Center" HorizontalOptions="End" CornerRadius="15" BorderColor="Black" BorderWidth="0.5" Clicked="AddTaskButton_Clicked" />
                 </Grid>
                 
                 <!-- Divider -->
-                <BoxView x:Name="Line" Grid.Row="1" HeightRequest="1" Color="Black" Margin="5,0" />
+                <BoxView Grid.Row="1" x:Name="Divider" HeightRequest="1" Color="Black" Margin="5,0" />
 
                 <!-- #region Tasks -->
                 <ListView x:Name="TasksView" Grid.Row="2" ItemsSource="{Binding TaskModel}" SelectionMode="None" ItemTapped="TasksView_ItemTapped" HasUnevenRows="True" SeparatorVisibility="None">
+                    <ListView.Header>
+                        <Label x:Name="TaskEmptyText" Text="할 일이 없습니다." FontSize="Medium" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" HorizontalOptions="Center">
+                            <Label.Triggers>
+                                <Trigger TargetType="Label" Property="IsVisible" Value="False">
+                                    <Setter Property="HeightRequest" Value="0" />
+                                </Trigger>
+                            </Label.Triggers>
+                        </Label>
+                    </ListView.Header>
+                    
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <ViewCell>

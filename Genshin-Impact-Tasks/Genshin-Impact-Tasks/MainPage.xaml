@@ -14,7 +14,7 @@
             </Grid.RowDefinitions>
             
             <!-- #region Top -->
-            <Frame Grid.Row="0" x:Name="TopFrame" BackgroundColor="Gray" Padding="24">
+            <Frame Grid.Row="0" x:Name="TopFrame" BackgroundColor="Gray" Padding="24" CornerRadius="0">
                 <Frame.GestureRecognizers>
                     <SwipeGestureRecognizer Direction="Down" Swiped="TopFrame_DownSwiped" />
                     <SwipeGestureRecognizer Direction="Up" Swiped="TopFrame_UpSwiped" />
@@ -32,7 +32,7 @@
                     
                     <!-- Setting Button -->
                     <StackLayout Orientation="Horizontal" HorizontalOptions="End">
-                        <ImageButton Source="Resources/setting.png" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" />
+                        <ImageButton Source="Resources/setting.png" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" Clicked="SettingButton_Clicked" />
                     </StackLayout>
                 </Grid>
             </Frame>
@@ -52,7 +52,7 @@
                 <!-- Task Tab -->
                 <Button x:Name="TaskTabBtn" Text="할 일" Grid.Column="0" CornerRadius="5" ContentLayout="Left" Image="Resources/task.png" BindingContext="Task" Clicked="NavigateTab_Clicked" BorderColor="Black" BorderWidth="1" />
                 <!-- Domains Tab -->
-                <Button x:Name="DomainsTabBtn" Text="비경" Grid.Column="1" CornerRadius="5" ContentLayout="Left" Image="Resources/waypoint_domains.png" BindingContext="Domains" Clicked="NavigateTab_Clicked" BorderColor="Black" BorderWidth="1" />
+                <Button x:Name="DomainsTabBtn" Text="비경" Grid.Column="1" CornerRadius="5" ContentLayout="Left" Image="Resources/domains.png" BindingContext="Domains" Clicked="NavigateTab_Clicked" BorderColor="Black" BorderWidth="1" />
                 <!-- Timer Tab -->
                 <Button x:Name="TimerTabBtn" Text="타이머" Grid.Column="2" CornerRadius="5" ContentLayout="Left" Image="Resources/timer.png" BindingContext="Timer" Clicked="NavigateTab_Clicked" BorderColor="Black" BorderWidth="1" />
             </Grid>

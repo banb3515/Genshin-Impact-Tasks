@@ -1,7 +1,9 @@
-﻿using SQLite;
+﻿using Genshin_Impact_Tasks.Popups;
+
+using Rg.Plugins.Popup.Services;
 
 using System;
-using System.IO;
+using System.Diagnostics;
 
 using Xamarin.Forms;
 
@@ -9,12 +11,14 @@ namespace Genshin_Impact_Tasks
 {
     public partial class MainPage : ContentPage
     {
-        DayOfWeek CurrentDow { get; set; } // 현재 요일
+        DayOfWeek CurrentDow { get; set; }
 
         public MainPage()
         {
             try
             {
+                App.Current.UserAppTheme = OSAppTheme.Light;
+
                 InitializeComponent();
 
                 Init();
@@ -30,6 +34,9 @@ namespace Genshin_Impact_Tasks
         {
             try
             {
+                if (App.UseDarkMode) BackgroundColor = Color.FromHex("242424");
+                else BackgroundColor = Color.White;
+
                 OnDayOfWeekTimer();
 
                 // 1초 마다 요일이 변경되었는지 확인합니다.
@@ -49,11 +56,10 @@ namespace Genshin_Impact_Tasks
             {
                 // 오전 5시 이후에 요일 변경
                 DateTime date;
-
                 if (DateTime.Now.Hour >= 5) date = DateTime.Now;
                 else date = DateTime.Now.AddDays(-1);
 
-                if (CurrentDow == date.DayOfWeek) return true;
+                if (ClassId == "1" && CurrentDow == date.DayOfWeek) return true;
                 CurrentDow = date.DayOfWeek;
 
                 // 요일별 색상 적용
@@ -239,7 +245,7 @@ namespace Genshin_Impact_Tasks
         #endregion
 
         #region 탭 이동
-        private void NavigateTab_Clicked(object sender, EventArgs e)
+        private async void NavigateTab_Clicked(object sender, EventArgs e)
         {
             try
             {
@@ -257,20 +263,28 @@ namespace Genshin_Impact_Tasks
                         TimerTab.IsVisible = false;
                         break;
                     case "Domains":
-                        CurrentTabImage.Source = "Resources/waypoint_domains.png";
+                        await DisplayAlert("비경", "개발 중 입니다.", "확인");
+
+                        /*
+                        CurrentTabImage.Source = "Resources/domains.png";
                         CurrentTabTitle.Text = "비경";
 
                         TaskTab.IsVisible = false;
                         DomainsTab.IsVisible = true;
                         TimerTab.IsVisible = false;
+                        */
                         break;
                     case "Timer":
+                        await DisplayAlert("타이머", "개발 중 입니다.", "확인");
+
+                        /*
                         CurrentTabImage.Source = "Resources/timer.png";
                         CurrentTabTitle.Text = "타이머";
 
                         TaskTab.IsVisible = false;
                         DomainsTab.IsVisible = false;
                         TimerTab.IsVisible = true;
+                        */
                         break;
                 }
 
@@ -296,6 +310,20 @@ namespace Genshin_Impact_Tasks
         {
             if (TabBar.IsVisible && TabListDropdownBtn.IsEnabled)
                 HideTabList();
+        }
+        #endregion
+
+        #region 설정 버튼 클릭 시
+        private async void SettingButton_Clicked(object sender, EventArgs e)
+        {
+            try
+            {
+                await PopupNavigation.Instance.PushAsync(new SettingPopup());
+            }
+            catch (Exception ex)
+            {
+                App.DisplayEx(ex);
+            }
         }
         #endregion
     }

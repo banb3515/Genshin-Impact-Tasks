@@ -3,13 +3,10 @@ using Genshin_Impact_Tasks.Popups;
 
 using Rg.Plugins.Popup.Services;
 
-using SQLite;
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 
 using Xamarin.Essentials;
 using Xamarin.Forms;
@@ -25,6 +22,7 @@ namespace Genshin_Impact_Tasks.Pages
         List<TaskModel> DailyTasks { get; set; } // 일일 반복 할 일
         List<TaskModel> WeeklyTasks { get; set; } // 주간 반복 할 일
         List<TaskModel> OneTimeTasks { get; set; } // 일회성 할 일
+        List<TaskModel> CompleteOneTimeTasks { get; set; } // 완료된 일회성 할 일
 
         public TaskTabView()
         {
@@ -49,33 +47,33 @@ namespace Genshin_Impact_Tasks.Pages
                 DailyTasks = new List<TaskModel>();
                 WeeklyTasks = new List<TaskModel>();
                 OneTimeTasks = new List<TaskModel>();
-
-                // 기기의 테마가 다크 모드일 경우
-                if(App.Current.RequestedTheme == OSAppTheme.Dark)
-                {
-                    Title.TextColor = Color.White;
-                    Line.Color = Color.White;
-                }
+                CompleteOneTimeTasks = new List<TaskModel>();
 
                 #region 데이터베이스 값 가져오기
-                var db = new SQLiteConnection(App.DbFilePath, App.OpenFlags);
-
                 // 일일 반복
-                foreach (var data in db.Table<DailyTaskTable>())
-                    DailyTasks.Add(new TaskModel { Content = data.Content, IconPath = data.IconPath, Status = data.Status });
+                App.Database.Table<DailyTaskTable>().ToList().ForEach(task => { DailyTasks.Add(new TaskModel { Content = task.Content, IconPath = task.IconPath, Status = task.Status }); });
 
                 // 주간 반복
-                foreach (var data in db.Table<WeeklyTaskTable>())
-                    WeeklyTasks.Add(new TaskModel { Content = data.Content, IconPath = data.IconPath, Status = data.Status });
+                App.Database.Table<WeeklyTaskTable>().ToList().ForEach(task => { WeeklyTasks.Add(new TaskModel { Content = task.Content, IconPath = task.IconPath, Status = task.Status }); });
 
                 // 일회성
-                foreach (var data in db.Table<OneTimeTaskTable>())
-                    OneTimeTasks.Add(new TaskModel { Content = data.Content, IconPath = data.IconPath, Status = data.Status });
-
-                db.Close();
+                App.Database.Table<OneTimeTaskTable>().ToList().ForEach(task => 
+                { 
+                    if (!task.Status)
+                        OneTimeTasks.Add(new TaskModel { Content = task.Content, IconPath = task.IconPath, Status = task.Status }); 
+                    else
+                        CompleteOneTimeTasks.Add(new TaskModel { Content = task.Content, IconPath = task.IconPath, Status = task.Status });
+                });
                 #endregion
 
+                if (DailyTasks.Count > 0) TaskEmptyText.IsVisible = false;
                 TasksView.ItemsSource = DailyTasks;
+
+                // 날짜 변경 감지
+                Device.StartTimer(TimeSpan.FromSeconds(1), OnDetectDateChange);
+
+                if (App.UseDarkMode)
+                    Divider.Color = Color.White;
             }
             catch (Exception ex)
             {
@@ -84,23 +82,92 @@ namespace Genshin_Impact_Tasks.Pages
         }
         #endregion
 
+        #region 날짜 변경 감지
+        private bool OnDetectDateChange()
+        {
+            try
+            {
+                var date = Convert.ToDateTime(App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "Date").FirstOrDefault().Value);
+
+                DateTime current;
+                if (DateTime.Now.Hour >= 5) current = DateTime.Now;
+                else current = DateTime.Now.AddDays(-1);
+
+                #region 일일 반복 초기화
+                if (current.ToString("yyyyMMdd") != date.ToString("yyyyMMdd"))
+                {
+                    App.Database.Table<DailyTaskTable>().ToList().ForEach(t =>
+                    {
+                        t.Status = false;
+                        App.Database.Update(t);
+                    });
+
+                    for (int i = 0; i < DailyTasks.Count; i++)
+                        DailyTasks[i].Status = false;
+
+                    #region 주간 반복 초기화
+                    if (current.DayOfWeek == DayOfWeek.Monday)
+                    {
+                        App.Database.Table<WeeklyTaskTable>().ToList().ForEach(t =>
+                        {
+                            t.Status = false;
+                            App.Database.Update(t);
+                        });
+
+                        for (int i = 0; i < WeeklyTasks.Count; i++)
+                            WeeklyTasks[i].Status = false;
+                    }
+                    #endregion
+
+                    var dateDb = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "Date").FirstOrDefault();
+                    dateDb.Value = current.ToString();
+                    App.Database.Update(dateDb);
+
+                    TaskListRefresh();
+                }
+                #endregion
+            }
+            catch (Exception ex)
+            {
+                App.DisplayEx(ex);
+            }
+
+            return true;
+        }
+        #endregion
+
         #region 할 일 목록 새로고침
         private void TaskListRefresh()
         {
             try
             {
+                TaskEmptyText.IsVisible = true;
                 TasksView.ItemsSource = null;
 
                 switch (CurrentTaskList)
                 {
                     case "Daily":
+                        if (DailyTasks.Count > 0) TaskEmptyText.IsVisible = false;
                         TasksView.ItemsSource = DailyTasks;
                         break;
                     case "Weekly":
+                        if (WeeklyTasks.Count > 0) TaskEmptyText.IsVisible = false;
                         TasksView.ItemsSource = WeeklyTasks;
                         break;
                     case "OneTime":
-                        TasksView.ItemsSource = OneTimeTasks;
+                        switch (OTTCompleteListButton.Text)
+                        {
+                            case "완료 보기":
+                                Debug.WriteLine(OneTimeTasks.Count);
+                                if (OneTimeTasks.Count > 0) TaskEmptyText.IsVisible = false;
+                                TasksView.ItemsSource = OneTimeTasks;
+                                break;
+                            case "미완료 보기":
+                                Debug.WriteLine(CompleteOneTimeTasks.Count);
+                                if (CompleteOneTimeTasks.Count > 0) TaskEmptyText.IsVisible = false;
+                                TasksView.ItemsSource = CompleteOneTimeTasks;
+                                break;
+                        }
                         break;
                 }
             }
@@ -122,23 +189,55 @@ namespace Genshin_Impact_Tasks.Pages
                 switch (CurrentTaskList)
                 {
                     case "Daily":
+                        var dailyDb = App.Database.Table<DailyTaskTable>().ToList().Where(t => t.Content == DailyTasks[idx].Content).FirstOrDefault();
+                        dailyDb.Status = !dailyDb.Status;
+                        App.Database.Update(dailyDb);
+
                         DailyTasks[idx].Status = !DailyTasks[idx].Status;
                         break;
                     case "Weekly":
+                        var weeklyDb = App.Database.Table<WeeklyTaskTable>().ToList().Where(t => t.Content == WeeklyTasks[idx].Content).FirstOrDefault();
+                        weeklyDb.Status = !weeklyDb.Status;
+                        App.Database.Update(weeklyDb);
+
                         WeeklyTasks[idx].Status = !WeeklyTasks[idx].Status;
                         break;
                     case "OneTime":
-                        OneTimeTasks[idx].Status = !OneTimeTasks[idx].Status;
+                        switch (OTTCompleteListButton.Text)
+                        {
+                            case "완료 보기":
+                                var oneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.Content == OneTimeTasks[idx].Content).FirstOrDefault();
+                                oneTimeDb.Status = !oneTimeDb.Status;
+                                oneTimeDb.CompleteTime = DateTime.Now.ToString();
+                                App.Database.Update(oneTimeDb);
+
+                                var oneTimeTmp = OneTimeTasks[idx];
+                                oneTimeTmp.Status = !oneTimeTmp.Status;
+                                CompleteOneTimeTasks.Add(oneTimeTmp);
+                                OneTimeTasks.RemoveAt(idx);
+                                break;
+                            case "미완료 보기":
+                                var cOneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.Content == CompleteOneTimeTasks[idx].Content).FirstOrDefault();
+                                cOneTimeDb.Status = !cOneTimeDb.Status;
+                                cOneTimeDb.CompleteTime = "";
+                                App.Database.Update(cOneTimeDb);
+
+                                var cOneTimeTmp = CompleteOneTimeTasks[idx];
+                                cOneTimeTmp.Status = !cOneTimeTmp.Status;
+                                OneTimeTasks.Add(cOneTimeTmp);
+                                CompleteOneTimeTasks.RemoveAt(idx);
+                                break;
+                        }
                         break;
                 }
 
                 TaskListRefresh();
 
-                if(Device.RuntimePlatform == Device.UWP)
+                if (Device.RuntimePlatform == Device.UWP)
                     TasksView.ScrollTo(item, ScrollToPosition.Center, false);
 
                 // 안드로이드, 진동 0.05초 동안 울림
-                if (Device.RuntimePlatform == Device.Android)
+                if (App.UseVibration && Device.RuntimePlatform == Device.Android)
                     Vibration.Vibrate(TimeSpan.FromMilliseconds(50));
             }
             catch (Exception ex)
@@ -159,9 +258,13 @@ namespace Genshin_Impact_Tasks.Pages
 
                 CurrentTaskList = task;
 
+                OTTCompleteListButton.IsEnabled = false;
                 EnableTaskButton(false);
 
                 _ = Title.FadeTo(0, 500, Easing.SpringOut);
+
+                if (task != "OneTime" && OTTCompleteListButton.IsVisible)
+                    _ = OTTCompleteListButton.FadeTo(0, 500, Easing.SpringOut);
 
                 await TasksView.FadeTo(0, 300, Easing.SpringOut);
                 TasksView.IsVisible = false;
@@ -170,14 +273,30 @@ namespace Genshin_Impact_Tasks.Pages
                 {
                     case "Daily":
                         Title.Text = "일일 반복";
+                        TaskEmptyText.Text = "할 일이 없습니다.";
                         _ = Title.FadeTo(1, 150, Easing.CubicIn);
+                        OTTCompleteListButton.IsVisible = false;
                         break;
                     case "Weekly":
                         Title.Text = "주간 반복";
+                        TaskEmptyText.Text = "할 일이 없습니다.";
                         _ = Title.FadeTo(1, 150, Easing.CubicIn);
+                        OTTCompleteListButton.IsVisible = false;
                         break;
                     case "OneTime":
-                        Title.Text = "할 일";
+                        if (OTTCompleteListButton.Text == "완료 보기")
+                        {
+                            Title.Text = "할 일 [미완료]";
+                            TaskEmptyText.Text = "할 일이 없습니다.";
+                        }
+                        else
+                        {
+                            Title.Text = "할 일 [완료]";
+                            TaskEmptyText.Text = "완료된 할 일이 없습니다.";
+                        }
+                        OTTCompleteListButton.IsVisible = true;
+                        OTTCompleteListButton.IsEnabled = true;
+                        _ = OTTCompleteListButton.FadeTo(1, 160, Easing.CubicIn);
                         _ = Title.FadeTo(1, 150, Easing.CubicIn);
                         break;
                 }
@@ -233,12 +352,21 @@ namespace Genshin_Impact_Tasks.Pages
                         idx = WeeklyTasks.FindIndex(t => t.Content == content);
                         break;
                     case "OneTime":
-                        idx = OneTimeTasks.FindIndex(t => t.Content == content);
+                        switch (OTTCompleteListButton.Text)
+                        {
+                            case "완료 보기":
+                                idx = OneTimeTasks.FindIndex(t => t.Content == content);
+                                break;
+                            case "미완료 보기":
+                                idx = CompleteOneTimeTasks.FindIndex(t => t.Content == content);
+                                break;
+                        }
                         break;
                 }
 
                 switch (answer)
                 {
+                    #region 아이콘 변경
                     case "아이콘 변경":
                         var popup = new SelectIconPopup();
 
@@ -249,13 +377,37 @@ namespace Genshin_Impact_Tasks.Pages
                                 switch (CurrentTaskList)
                                 {
                                     case "Daily":
+                                        var dailyDb = App.Database.Table<DailyTaskTable>().ToList().Where(t => t.Content == DailyTasks[idx].Content).FirstOrDefault();
+                                        dailyDb.IconPath = arg.IconPath;
+                                        App.Database.Update(dailyDb);
+
                                         DailyTasks[idx].IconPath = arg.IconPath;
                                         break;
                                     case "Weekly":
+                                        var weeklyDb = App.Database.Table<WeeklyTaskTable>().ToList().Where(t => t.Content == WeeklyTasks[idx].Content).FirstOrDefault();
+                                        weeklyDb.IconPath = arg.IconPath;
+                                        App.Database.Update(weeklyDb);
+
                                         WeeklyTasks[idx].IconPath = arg.IconPath;
                                         break;
                                     case "OneTime":
-                                        OneTimeTasks[idx].IconPath = arg.IconPath;
+                                        switch (OTTCompleteListButton.Text)
+                                        {
+                                            case "완료 보기":
+                                                var oneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.Content == OneTimeTasks[idx].Content).FirstOrDefault();
+                                                oneTimeDb.IconPath = arg.IconPath;
+                                                App.Database.Update(oneTimeDb);
+
+                                                OneTimeTasks[idx].IconPath = arg.IconPath;
+                                                break;
+                                            case "미완료 보기":
+                                                var cOneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.Content == CompleteOneTimeTasks[idx].Content).FirstOrDefault();
+                                                cOneTimeDb.IconPath = arg.IconPath;
+                                                App.Database.Update(cOneTimeDb);
+
+                                                CompleteOneTimeTasks[idx].IconPath = arg.IconPath;
+                                                break;
+                                        }
                                         break;
                                 }
 
@@ -265,6 +417,9 @@ namespace Genshin_Impact_Tasks.Pages
 
                         await PopupNavigation.Instance.PushAsync(popup);
                         break;
+                    #endregion
+
+                    #region 내용 편집
                     case "내용 편집":
                         string newContent = "";
 
@@ -279,18 +434,15 @@ namespace Genshin_Impact_Tasks.Pages
 
                             bool flag = false;
 
+                            // 중복 확인, 일회성 할 일은 내용 중복을 허용함.
                             switch (CurrentTaskList)
                             {
                                 case "Daily":
-                                    if (DailyTasks.Where(t => t.Content == newContent).ToList().Count > 0)
+                                    if (App.Database.Table<DailyTaskTable>().ToList().Where(t => t.Content == newContent).Count() > 0)
                                         flag = true;
                                     break;
                                 case "Weekly":
-                                    if (WeeklyTasks.Where(t => t.Content == newContent).ToList().Count > 0)
-                                        flag = true;
-                                    break;
-                                case "OneTime":
-                                    if (OneTimeTasks.Where(t => t.Content == newContent).ToList().Count > 0)
+                                    if (App.Database.Table<WeeklyTaskTable>().ToList().Where(t => t.Content == newContent).Count() > 0)
                                         flag = true;
                                     break;
                             }
@@ -307,34 +459,83 @@ namespace Genshin_Impact_Tasks.Pages
                         switch (CurrentTaskList)
                         {
                             case "Daily":
+                                var dailyDb = App.Database.Table<DailyTaskTable>().ToList().Where(t => t.Content == DailyTasks[idx].Content).FirstOrDefault();
+                                dailyDb.Content = newContent;
+                                App.Database.Update(dailyDb);
+
                                 DailyTasks[idx].Content = newContent;
                                 break;
                             case "Weekly":
+                                var weeklyDb = App.Database.Table<WeeklyTaskTable>().ToList().Where(t => t.Content == WeeklyTasks[idx].Content).FirstOrDefault();
+                                weeklyDb.Content = newContent;
+                                App.Database.Update(weeklyDb);
+
                                 WeeklyTasks[idx].Content = newContent;
                                 break;
                             case "OneTime":
-                                OneTimeTasks[idx].Content = newContent;
+                                switch (OTTCompleteListButton.Text)
+                                {
+                                    case "완료 보기":
+                                        var oneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.Content == OneTimeTasks[idx].Content).FirstOrDefault();
+                                        oneTimeDb.Content = newContent;
+                                        App.Database.Update(oneTimeDb);
+
+                                        OneTimeTasks[idx].Content = newContent;
+                                        break;
+                                    case "미완료 보기":
+                                        var cOneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.Content == CompleteOneTimeTasks[idx].Content).FirstOrDefault();
+                                        cOneTimeDb.Content = newContent;
+                                        App.Database.Update(cOneTimeDb);
+
+                                        CompleteOneTimeTasks[idx].Content = newContent;
+                                        break;
+                                }
                                 break;
                         }
                         break;
+                    #endregion
+
+                    #region 삭제
                     case "삭제":
-                        var remove = await App.Current.MainPage.DisplayAlert("삭제", $"[{content}] (을)를 삭제하시겠습니까?\n삭제된 항목은 복구할 수 없습니다.", "삭제", "취소");
+                        var remove = await App.Current.MainPage.DisplayAlert("삭제", $"[{content}] (을)를 삭제합니다.\n삭제된 항목은 복구할 수 없습니다.", "삭제", "취소");
 
                         if (!remove) return;
 
                         switch (CurrentTaskList)
                         {
                             case "Daily":
+                                var dailyDb = App.Database.Table<DailyTaskTable>().ToList().Where(t => t.Content == DailyTasks[idx].Content).FirstOrDefault();
+                                App.Database.Delete(dailyDb);
+
                                 DailyTasks.RemoveAt(idx);
                                 break;
                             case "Weekly":
+                                var weeklyDb = App.Database.Table<WeeklyTaskTable>().ToList().Where(t => t.Content == WeeklyTasks[idx].Content).FirstOrDefault();
+                                App.Database.Delete(weeklyDb);
+
                                 WeeklyTasks.RemoveAt(idx);
                                 break;
                             case "OneTime":
-                                OneTimeTasks.RemoveAt(idx);
+                                switch (OTTCompleteListButton.Text)
+                                {
+                                    case "완료 보기":
+                                        var oneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.Content == OneTimeTasks[idx].Content).FirstOrDefault();
+                                        App.Database.Delete(oneTimeDb);
+
+                                        OneTimeTasks.RemoveAt(idx);
+                                        break;
+                                    case "미완료 보기":
+                                        var cOneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.Content == CompleteOneTimeTasks[idx].Content).FirstOrDefault();
+                                        App.Database.Delete(cOneTimeDb);
+
+                                        CompleteOneTimeTasks.RemoveAt(idx);
+                                        break;
+                                }
                                 break;
                         }
                         break;
+                    #endregion
+
                     default:
                         return;
                 }
@@ -348,25 +549,12 @@ namespace Genshin_Impact_Tasks.Pages
         }
         #endregion
 
-        #region 아이템 추가 버튼 클릭 시
+        #region 할 일 추가 버튼 클릭 시
         private async void AddTaskButton_Clicked(object sender, EventArgs e)
         {
             try
             {
-                AddTaskPopup popup = null;
-
-                switch (CurrentTaskList)
-                {
-                    case "Daily":
-                        popup = new AddTaskPopup(DailyTasks);
-                        break;
-                    case "Weekly":
-                        popup = new AddTaskPopup(WeeklyTasks);
-                        break;
-                    case "OneTime":
-                        popup = new AddTaskPopup(OneTimeTasks);
-                        break;
-                }
+                var popup = new AddTaskPopup(CurrentTaskList);
 
                 popup.OnClosed += (s, arg) =>
                 {
@@ -375,13 +563,24 @@ namespace Genshin_Impact_Tasks.Pages
                         switch (CurrentTaskList)
                         {
                             case "Daily":
+                                var daily = new DailyTaskTable { Content = arg.Task.Content, IconPath = arg.Task.IconPath, Status = false, CreateTime = DateTime.Now.ToString() };
+                                App.Database.Insert(daily);
+
                                 DailyTasks.Add(arg.Task);
                                 break;
                             case "Weekly":
+                                var weekly = new WeeklyTaskTable { Content = arg.Task.Content, IconPath = arg.Task.IconPath, Status = false, CreateTime = DateTime.Now.ToString() };
+                                App.Database.Insert(weekly);
+
                                 WeeklyTasks.Add(arg.Task);
                                 break;
                             case "OneTime":
+                                var oneTime = new OneTimeTaskTable { Content = arg.Task.Content, IconPath = arg.Task.IconPath, Status = false, CreateTime = DateTime.Now.ToString(), CompleteTime = "" };
+                                App.Database.Insert(oneTime);
+
                                 OneTimeTasks.Add(arg.Task);
+
+                                if (OTTCompleteListButton.Text == "미완료 보기") OTTCompleteListButton.Text = "완료 보기";
                                 break;
                         }
 
@@ -390,6 +589,32 @@ namespace Genshin_Impact_Tasks.Pages
                 };
 
                 await PopupNavigation.Instance.PushAsync(popup);
+            }
+            catch (Exception ex)
+            {
+                App.DisplayEx(ex);
+            }
+        }
+        #endregion
+
+        #region 일회성 할 일 목록 완료/미완료 전환 버튼
+        private void OTTCompleteListButton_Clicked(object sender, EventArgs e)
+        {
+            try
+            {
+                if (OTTCompleteListButton.Text == "완료 보기")
+                {
+                    OTTCompleteListButton.Text = "미완료 보기";
+                    Title.Text = "할 일 [완료]";
+                    TaskEmptyText.Text = "완료된 할 일이 없습니다.";
+                }
+                else
+                {
+                    OTTCompleteListButton.Text = "완료 보기";
+                    Title.Text = "할 일 [미완료]";
+                    TaskEmptyText.Text = "할 일이 없습니다.";
+                }
+                TaskListRefresh();
             }
             catch (Exception ex)
             {

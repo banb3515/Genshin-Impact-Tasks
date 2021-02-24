@@ -3,8 +3,9 @@
 using Rg.Plugins.Popup.Pages;
 using Rg.Plugins.Popup.Services;
 
+using SQLite;
+
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 using Xamarin.Forms;
@@ -15,23 +16,19 @@ namespace Genshin_Impact_Tasks.Popups
 	[XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class AddTaskPopup : PopupPage
     {
-        public bool UseDarkMode { get; set; } = false; // 다크 모드 사용 여부
-
         public string CurrentIconPath { get; set; } = ""; // 현재 선택된 아이콘 경로
 
-        public List<TaskModel> tasks; // 중복 확인을 위한 임시 리스트
+        public string CurrentTaskList { get; set; }
 
         public EventHandler<AddTaskResult> OnClosed;
 
-        public AddTaskPopup(List<TaskModel> tasks)
+        public AddTaskPopup(string currentTaskList)
         {
-            if (App.Current.RequestedTheme == OSAppTheme.Dark) UseDarkMode = true;
-
             InitializeComponent();
 
-            this.tasks = tasks;
+            CurrentTaskList = currentTaskList;
 
-            if (UseDarkMode)
+            if (App.UseDarkMode)
                 MainFrame.BackgroundColor = Color.FromHex("333333");
 
             ContentEntry.Focus();
@@ -49,7 +46,22 @@ namespace Genshin_Impact_Tasks.Popups
                     return;
                 }
 
-                if (tasks.Where(t => t.Content == ContentEntry.Text.Trim()).ToList().Count > 0)
+                bool flag = false;
+
+                // 중복 확인, 일회성 할 일은 내용 중복을 허용함.
+                switch (CurrentTaskList)
+                {
+                    case "Daily":
+                        if (App.Database.Table<DailyTaskTable>().ToList().Where(t => t.Content == ContentEntry.Text.Trim()).Count() > 0)
+                            flag = true;
+                        break;
+                    case "Weekly":
+                        if (App.Database.Table<WeeklyTaskTable>().ToList().Where(t => t.Content == ContentEntry.Text.Trim()).Count() > 0)
+                            flag = true;
+                        break;
+                }
+
+                if (flag)
                 {
                     await App.Current.MainPage.DisplayAlert("할 일 추가", $"[{ContentEntry.Text.Trim()}] (은)는 이미 존재합니다.", "확인");
                     ContentEntry.Focus();
