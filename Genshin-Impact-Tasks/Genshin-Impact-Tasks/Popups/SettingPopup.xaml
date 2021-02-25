@@ -21,6 +21,24 @@
 
                 <ScrollView>
                     <StackLayout Margin="5">
+                        <!-- #region 동기화됨 -->
+                        <Label Grid.Column="1" x:Name="SyncMailText" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" VerticalTextAlignment="Center" VerticalOptions="Center" HorizontalTextAlignment="Center" FontSize="Medium" HeightRequest="30" Margin="5,0" />
+                        <!-- #endregion -->
+
+                        <!-- #region 동기화 -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Image Grid.Column="0" x:Name="SyncIcon" Source="Resources/sync.png" HeightRequest="30" Margin="0,5" />
+                            <Label Grid.Column="1" Text="동기화" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" VerticalTextAlignment="Center" VerticalOptions="Center" FontSize="Small" HeightRequest="40" Margin="5" />
+                            <Switch Grid.Column="2" x:Name="SyncSwitch" ClassId="0" ThumbColor="LightGreen" OnColor="Gray" Toggled="SyncSwitch_Toggled" VerticalOptions="Center" />
+                        </Grid>
+                        <!-- #endregion -->
+                        
                         <!-- #region 테마 -->
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -45,7 +63,7 @@
 
                             <Image Grid.Column="0" x:Name="VibrationIcon" Source="Resources/vibration.png" HeightRequest="30" Margin="0,5" />
                             <Label Grid.Column="1" Text="진동" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" VerticalTextAlignment="Center" VerticalOptions="Center" FontSize="Small" HeightRequest="40" Margin="5" />
-                            <Switch Grid.Column="2" x:Name="VibrationSwitch" ThumbColor="LightGreen" OnColor="Gray" Toggled="VibrationSwitch_Toggled" />
+                            <Switch Grid.Column="2" x:Name="VibrationSwitch" ThumbColor="LightGreen" OnColor="Gray" Toggled="VibrationSwitch_Toggled" VerticalOptions="Center" />
                         </Grid>
                         <!-- #endregion -->
 

@@ -3,7 +3,6 @@
 using Rg.Plugins.Popup.Services;
 
 using System;
-using System.Diagnostics;
 
 using Xamarin.Forms;
 

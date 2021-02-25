@@ -164,6 +164,8 @@
     <Content Include="Resources\quest_commission.png" />
     <Content Include="Resources\quest_quest.png" />
     <Content Include="Resources\setting.png" />
+    <Content Include="Resources\sync.png" />
+    <Content Include="Resources\sync_white.png" />
     <Content Include="Resources\task.png" />
     <Content Include="Resources\theme.png" />
     <Content Include="Resources\theme_white.png" />
@@ -186,6 +188,9 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="FirebaseDatabase.net">
+      <Version>4.0.5</Version>
+    </PackageReference>
     <PackageReference Include="Rg.Plugins.Popup">
       <Version>2.0.0.10</Version>
     </PackageReference>

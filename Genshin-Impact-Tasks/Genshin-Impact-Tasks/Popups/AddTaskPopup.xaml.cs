@@ -3,8 +3,6 @@
 using Rg.Plugins.Popup.Pages;
 using Rg.Plugins.Popup.Services;
 
-using SQLite;
-
 using System;
 using System.Linq;
 
@@ -42,28 +40,6 @@ namespace Genshin_Impact_Tasks.Popups
                 if (string.IsNullOrWhiteSpace(ContentEntry.Text))
                 {
                     await App.Current.MainPage.DisplayAlert("할 일 추가", "할 일을 입력해주세요.", "확인");
-                    ContentEntry.Focus();
-                    return;
-                }
-
-                bool flag = false;
-
-                // 중복 확인, 일회성 할 일은 내용 중복을 허용함.
-                switch (CurrentTaskList)
-                {
-                    case "Daily":
-                        if (App.Database.Table<DailyTaskTable>().ToList().Where(t => t.Content == ContentEntry.Text.Trim()).Count() > 0)
-                            flag = true;
-                        break;
-                    case "Weekly":
-                        if (App.Database.Table<WeeklyTaskTable>().ToList().Where(t => t.Content == ContentEntry.Text.Trim()).Count() > 0)
-                            flag = true;
-                        break;
-                }
-
-                if (flag)
-                {
-                    await App.Current.MainPage.DisplayAlert("할 일 추가", $"[{ContentEntry.Text.Trim()}] (은)는 이미 존재합니다.", "확인");
                     ContentEntry.Focus();
                     return;
                 }

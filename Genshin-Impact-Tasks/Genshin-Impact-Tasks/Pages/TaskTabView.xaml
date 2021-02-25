@@ -60,7 +60,7 @@
 
                                     <Image Grid.Column="0" Source="{Binding IconPath}" WidthRequest="30" HeightRequest="30" Margin="15,0,5,0" />
                                     <Label Grid.Column="1" Text="{Binding Content}" TextColor="Black" FontSize="Small" VerticalTextAlignment="Center" Margin="0,2" />
-                                    <ImageButton Grid.Column="2" Source="Resources/more.png" CommandParameter="{Binding Content}" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" Margin="5,0,15,0" Clicked="MoreButton_Clicked" />
+                                    <ImageButton Grid.Column="2" Source="Resources/more.png" CommandParameter="{Binding No}" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" Margin="5,0,15,0" Clicked="MoreButton_Clicked" />
                                 </Grid>
                             </ViewCell>
                         </DataTemplate>
