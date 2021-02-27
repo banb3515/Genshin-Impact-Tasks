@@ -10,14 +10,14 @@ namespace Genshin_Impact_Tasks
 {
     public partial class MainPage : ContentPage
     {
+        public static bool TimerDow { get; set; }
+
         DayOfWeek CurrentDow { get; set; }
 
         public MainPage()
         {
             try
             {
-                App.Current.UserAppTheme = OSAppTheme.Light;
-
                 InitializeComponent();
 
                 Init();
@@ -33,6 +33,8 @@ namespace Genshin_Impact_Tasks
         {
             try
             {
+                TimerDow = true;
+
                 if (App.UseDarkMode) BackgroundColor = Color.FromHex("242424");
                 else BackgroundColor = Color.White;
 
@@ -53,6 +55,8 @@ namespace Genshin_Impact_Tasks
         {
             try
             {
+                if (!TimerDow) return true;
+
                 // 오전 5시 이후에 요일 변경
                 DateTime date;
                 if (DateTime.Now.Hour >= 5) date = DateTime.Now;
@@ -317,7 +321,9 @@ namespace Genshin_Impact_Tasks
         {
             try
             {
+                SettingButton.IsEnabled = false;
                 await PopupNavigation.Instance.PushAsync(new SettingPopup());
+                SettingButton.IsEnabled = true;
             }
             catch (Exception ex)
             {

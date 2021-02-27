@@ -14,7 +14,7 @@ using Android.Util;
 
 namespace Genshin_Impact_Tasks.Droid
 {
-    [Activity(Label = "원신 태스크", Icon = "@mipmap/icon", Theme = "@style/MainTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize )]
+    [Activity(Label = "원신 태스크", Icon = "@drawable/icon", Theme = "@style/MainTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize )]
     public class MainActivity : global::Xamarin.Forms.Platform.Android.FormsAppCompatActivity
     {
         public static MainActivity Instance { get; set; }
@@ -49,12 +49,11 @@ namespace Genshin_Impact_Tasks.Droid
                 }
             }
             #endregion
-
-            // 초기화
-            Rg.Plugins.Popup.Popup.Init(this);
-
+                        
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
             global::Xamarin.Forms.Forms.Init(this, savedInstanceState);
+
+            Rg.Plugins.Popup.Popup.Init(this);
 
             LoadApplication(new App());
 

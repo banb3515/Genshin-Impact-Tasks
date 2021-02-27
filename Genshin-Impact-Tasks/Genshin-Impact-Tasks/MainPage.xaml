@@ -23,7 +23,7 @@
                 <Grid Margin="-10,-10,-10,0">
                     <!-- Current Tab Info -->
                     <StackLayout Orientation="Horizontal" Margin="0">
-                        <Image x:Name="CurrentTabImage" Source="Resources/task.png" HeightRequest="20" />
+                        <Image x:Name="CurrentTabImage" Source="Resources/task.png" HeightRequest="25" />
                         <Label x:Name="CurrentTabTitle" Text="할 일" FontAttributes="Bold" FontSize="Medium" TextColor="White" VerticalTextAlignment="Center" />
                     </StackLayout>
 
@@ -32,7 +32,7 @@
                     
                     <!-- Setting Button -->
                     <StackLayout Orientation="Horizontal" HorizontalOptions="End">
-                        <ImageButton Source="Resources/setting.png" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" Clicked="SettingButton_Clicked" />
+                        <ImageButton x:Name="SettingButton" Source="Resources/setting.png" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" Clicked="SettingButton_Clicked" />
                     </StackLayout>
                 </Grid>
             </Frame>

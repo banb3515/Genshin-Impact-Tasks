@@ -11,9 +11,9 @@ using Rg.Plugins.Popup.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 using Xamarin.Essentials;
 using Xamarin.Forms;
@@ -29,6 +29,8 @@ namespace Genshin_Impact_Tasks.Popups
         { 
             { "시스템 설정", "System" }, { "밝은 테마", "Light" }, { "어두운 테마", "Dark" } 
         };
+
+        private int PreviousSelected = 0;
 
         public SettingPopup()
         {
@@ -93,7 +95,9 @@ namespace Genshin_Impact_Tasks.Popups
                 for (int i = 1; i <= 60; i++)
                     TADDayPicker.Items.Add($"{i}일");
 
-                TADDayPicker.SelectedIndex = Convert.ToInt32(App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "TaskAutoDelete").FirstOrDefault().Value);
+                var tadDay = Convert.ToInt32(App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "TaskAutoDelete").FirstOrDefault().Value);
+                TADDayPicker.SelectedIndex = tadDay;
+                PreviousSelected = tadDay;
                 #endregion
 
                 #region 정보 텍스트 초기화
@@ -140,7 +144,21 @@ namespace Genshin_Impact_Tasks.Popups
 
                 if (SyncSwitch.IsToggled)
                 {
-                    await App.Current.MainPage.DisplayAlert("동기화", "동기화 활성화 시 데이터가 사용될 수 있습니다.", "확인");
+                    if (Connectivity.NetworkAccess != NetworkAccess.Internet)
+                    {
+                        await App.Current.MainPage.DisplayAlert("동기화", "인터넷에 연결되어 있지 않아 동기화를 할 수 없습니다.\n인터넷 연결 상태를 확인해주시기 바랍니다.", "확인");
+                        return;
+                    }
+
+                    var answer = await App.Current.MainPage.DisplayAlert("동기화",
+                        "# 동기화 활성화 시 주의 사항 #\n" +
+                        "1. 데이터가 사용될 수 있습니다.\n" +
+                        "2. 인터넷에 연결되어 있지 않으면 할 일 추가, 수정, 삭제, 일부 설정을 변경할 수 없습니다.\n" +
+                        "3. 모든 데이터는 서버에 저장됩니다.\n" +
+                        "4. 동기화 해제 시 서버에 있는 데이터를 가져올 수 없습니다.\n" +
+                        " - 다시 동기화 시 기존의 데이터를 가져올 수 있습니다.", "확인", "취소");
+
+                    if (!answer) return;
 
                     var email = "";
 
@@ -174,18 +192,33 @@ namespace Genshin_Impact_Tasks.Popups
                         break;
                     }
 
+                    if (Connectivity.NetworkAccess != NetworkAccess.Internet)
+                    {
+                        await App.Current.MainPage.DisplayAlert("동기화", "인터넷에 연결되어 있지 않아 동기화를 할 수 없습니다.\n인터넷 연결 상태를 확인해주시기 바랍니다.", "확인");
+                        return;
+                    }
+
                     var random = new Random();
                     var code = random.Next(00000000, 99999999).ToString("D8");
                     var sendMail = new Mail("원신 태스크 인증 번호", $"<h2>원신 태스크 동기화 인증 번호는 [{code}] 입니다.</h2>", email);
                     sendMail.Send();
 
+                    var timeout = DateTime.Now;
+
                     while (true)
                     {
-                        var auth = await App.Current.MainPage.DisplayPromptAsync("동기화", 
-                            $"<{email}> (으)로 인증 번호가 전송되었습니다.\n인증 번호 8자리를 입력해주세요.\n(인증 번호가 안왔을 경우 스팸함을 확인해주세요.)", 
+                        var auth = await App.Current.MainPage.DisplayPromptAsync("동기화",
+                            $"<{email}> (으)로 인증 번호가 전송되었습니다.\n인증 번호 8자리를 입력해주세요. (인증 번호 유효 시간 10분)\n(인증 번호가 안왔을 경우 스팸함을 확인해주세요.)",
                             "확인", "취소", maxLength: 8, keyboard: Keyboard.Numeric);
 
                         if (auth == null) return;
+
+                        // 인증 번호 유효 시간 체크
+                        if (DateTime.Compare(DateTime.Now, timeout.AddMinutes(10)) > 0)
+                        {
+                            await App.Current.MainPage.DisplayAlert("동기화", "인증 번호가 만료되었습니다.\n다시 시도해주시기 바랍니다.", "확인");
+                            return;
+                        }
 
                         if (auth.Trim() == "")
                         {
@@ -202,12 +235,23 @@ namespace Genshin_Impact_Tasks.Popups
                         break;
                     }
 
-                    bool answer = false;
+                    if (Connectivity.NetworkAccess != NetworkAccess.Internet)
+                    {
+                        await App.Current.MainPage.DisplayAlert("동기화", "인터넷에 연결되어 있지 않아 동기화를 할 수 없습니다.\n인터넷 연결 상태를 확인해주시기 바랍니다.", "확인");
+                        return;
+                    }
+
+                    bool answer2 = false;
+
+                    var options = new FirebaseOptions { AuthTokenAsyncFactory = () => Task.FromResult(App.FirebaseSecretKey) };
+                    App.Firebase = new FirebaseClient(App.FirebaseUrl, options);
 
                     try
                     {
-                        if ((await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).ToList().Count > 0)
-                            answer = await App.Current.MainPage.DisplayAlert("동기화",
+                        var tmp = await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>();
+
+                        if (tmp != null && tmp.ToList().Count > 0)
+                            answer2 = await App.Current.MainPage.DisplayAlert("동기화",
                                 "동기화 방법을 선택해주세요.\n" +
                                 "- 서버 기준:\n[로컬(현재 기기)에 있는 정보를 모두 삭제]하고 서버에 있는 정보를 가져옵니다.\n" +
                                 "- 로컬 기준:\n[서버에 있는 정보를 모두 삭제]하고 로컬 정보를 서버에 전송합니다.",
@@ -216,21 +260,28 @@ namespace Genshin_Impact_Tasks.Popups
                     catch (NullReferenceException) { }
 
                     TaskTabView.TimerRepeat = false;
-                    
+
                     #region 서버 기준
-                    if (answer)
+                    if (answer2)
                     {
-                        App.Database.Table<SettingTable>().ToList().ForEach(task => { App.Database.Delete(task); });
-                        App.Database.Table<DailyTaskTable>().ToList().ForEach(task => { App.Database.Delete(task); });
-                        App.Database.Table<WeeklyTaskTable>().ToList().ForEach(task => { App.Database.Delete(task); });
-                        App.Database.Table<OneTimeTaskTable>().ToList().ForEach(task => { App.Database.Delete(task); });
+                        App.Database.Table<SettingTable>().ToList().ForEach(s =>
+                        {
+                            if (s.Key != "Theme" && s.Key != "Vibration" && s.Key != "SyncMail" && s.Key != "Version")
+                                App.Database.Delete(s);
+                        });
+                        App.Database.DropTable<DailyTaskTable>();
+                        App.Database.DropTable<WeeklyTaskTable>();
+                        App.Database.DropTable<OneTimeTaskTable>();
 
-                        // 동기화 시간 업데이트 - 서버
-                        var syncDateFb = (await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).Where(item => item.Object.Key == "SyncDate").FirstOrDefault();
-                        syncDateFb.Object.Value = DateTime.Now.ToString();
-                        await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("Setting").Child(syncDateFb.Key).PutAsync(syncDateFb.Object);
+                        App.Database.CreateTable<DailyTaskTable>();
+                        App.Database.CreateTable<WeeklyTaskTable>();
+                        App.Database.CreateTable<OneTimeTaskTable>();
 
-                        (await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).ToList().ForEach(item => { App.Database.Insert(item.Object); });
+                        (await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).ToList().ForEach(item =>
+                        {
+                            if (item.Object.Key != "Theme" && item.Object.Key != "Vibration" && item.Object.Key != "SyncMail" && item.Object.Key != "Version")
+                                App.Database.Insert(item.Object);
+                        });
                         (await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("DailyTask").OnceAsync<DailyTaskTable>()).ToList().ForEach(item => { App.Database.Insert(item.Object); });
                         (await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("WeeklyTask").OnceAsync<WeeklyTaskTable>()).ToList().ForEach(item => { App.Database.Insert(item.Object); });
                         (await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).ToList().ForEach(item => { App.Database.Insert(item.Object); });
@@ -240,20 +291,26 @@ namespace Genshin_Impact_Tasks.Popups
                     #region 로컬 기준
                     else
                     {
-                        await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("Setting").DeleteAsync();
-                        await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("DailyTask").DeleteAsync();
-                        await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("WeeklyTask").DeleteAsync();
-                        await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("OneTimeTask").DeleteAsync();
+                        try
+                        {
+                            await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).DeleteAsync();
+                        }
+                        catch (NullReferenceException) { }
 
                         // 동기화 시간 업데이트 - 로컬
                         var syncDateDb = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "SyncDate").FirstOrDefault();
                         syncDateDb.Value = DateTime.Now.ToString();
                         App.Database.Update(syncDateDb);
 
-                        App.Database.Table<SettingTable>().ToList().ForEach(async s => { await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("Setting").PostAsync(s); });
-                        App.Database.Table<DailyTaskTable>().ToList().ForEach(async t => { await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("DailyTask").PostAsync(t); });
-                        App.Database.Table<WeeklyTaskTable>().ToList().ForEach(async t => { await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("WeeklyTask").PostAsync(t); });
-                        App.Database.Table<OneTimeTaskTable>().ToList().ForEach(async t => { await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("OneTimeTask").PostAsync(t); });
+                        foreach (var s in App.Database.Table<SettingTable>().ToList())
+                            if (s.Key != "Theme" && s.Key != "Vibration" && s.Key != "SyncMail" && s.Key != "Version")
+                                await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("Setting").PostAsync(s);
+                        foreach (var t in App.Database.Table<DailyTaskTable>().ToList())
+                            await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("DailyTask").PostAsync(t);
+                        foreach (var t in App.Database.Table<WeeklyTaskTable>().ToList())
+                            await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("WeeklyTask").PostAsync(t);
+                        foreach (var t in App.Database.Table<OneTimeTaskTable>().ToList())
+                            await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("OneTimeTask").PostAsync(t);
                     }
                     #endregion
 
@@ -261,23 +318,21 @@ namespace Genshin_Impact_Tasks.Popups
                     syncMailDb.Value = email;
                     App.Database.Update(syncMailDb);
 
-                    App.SyncMail = email;
-
                     SyncMailText.IsVisible = true;
-                    SyncMailText.Text = $"<{App.SyncMail}> 동기화 됨";
+                    SyncMailText.Text = $"<{email}> 동기화 됨";
 
                     SyncSwitch.ClassId = "1";
                     SyncSwitch.IsToggled = true;
 
-                    if (App.Firebase == null)
-                        App.Firebase = new FirebaseClient(App.FirebaseUrl);
-
-                    await App.Current.MainPage.DisplayAlert("동기화", "동기화가 완료되었습니다.\n앱을 재시작해야 적용됩니다.", "앱 종료");
+                    await App.Current.MainPage.DisplayAlert("동기화", "동기화가 완료되었습니다.\n계속하려면 앱을 재시작해야합니다.", "앱 종료");
                     Process.GetCurrentProcess().Kill();
                 }
                 else
                 {
-                    var answer = await App.Current.MainPage.DisplayAlert("동기화", $"<{App.SyncMail}> 동기화를 해제합니다.", "해제", "취소");
+                    var answer = await App.Current.MainPage.DisplayAlert("동기화",
+                        $"<{App.SyncMail}> 동기화를 해제합니다.\n" +
+                        $"동기화 해제 시 서버에 있는 데이터를 가져올 수 없습니다.\n" +
+                        $"서버에 있는 데이터는 사라지지 않습니다.", "해제", "취소");
 
                     if (!answer)
                     {
@@ -292,15 +347,21 @@ namespace Genshin_Impact_Tasks.Popups
                     SyncSwitch.ClassId = "1";
                     SyncSwitch.IsToggled = false;
 
-                    var syncMailDb = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "SyncMail").FirstOrDefault();
-                    syncMailDb.Value = "";
-                    App.Database.Update(syncMailDb);
+                    MainPage.TimerDow = false;
+                    TaskTabView.TimerRepeat = false;
+                    TaskTabView.AutoSync = false;
 
-                    App.SyncMail = "";
+                    App.Database.Table<SettingTable>().ToList().ForEach(s =>
+                    {
+                        if (s.Key != "Theme" && s.Key != "Vibration" && s.Key != "Version")
+                            App.Database.Delete(s);
+                    });
+                    App.Database.DropTable<DailyTaskTable>();
+                    App.Database.DropTable<WeeklyTaskTable>();
+                    App.Database.DropTable<OneTimeTaskTable>();
 
-                    if (App.Firebase != null)
-                        App.Firebase.Dispose();
-                    App.Firebase = null;
+                    await App.Current.MainPage.DisplayAlert("동기화", "동기화를 해제하였습니다.\n계속하려면 앱을 재시작해야합니다.", "앱 종료");
+                    Process.GetCurrentProcess().Kill();
                 }
             }
             catch (Exception ex)
@@ -321,23 +382,8 @@ namespace Genshin_Impact_Tasks.Popups
                 themeDb.Value = Themes[ThemePicker.Items[ThemePicker.SelectedIndex]];
                 App.Database.Update(themeDb);
 
-                if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                {
-                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).Where(item => item.Object.Key == "Theme").FirstOrDefault();
-                    update.Object.Value = themeDb.Value;
-                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").Child(update.Key).PutAsync(update.Object);
-                }
-                else
-                {
-                    var localDb = App.UpdateHistoryDb.Table<SettingTable>().ToList().Where(t => t.Key == "Theme");
-
-                    if (localDb.ToList().Count > 0)
-                        App.UpdateHistoryDb.Update(themeDb);
-                    else
-                        App.UpdateHistoryDb.Insert(themeDb);
-                }
-
-                await App.Current.MainPage.DisplayAlert("테마 변경", "변경된 테마를 적용하려면 앱을 재시작 해야합니다.", "확인");
+                await App.Current.MainPage.DisplayAlert("테마", "테마가 변경되었습니다.\n테마를 적용하려면 앱을 재시작해야합니다.", "앱 종료");
+                Process.GetCurrentProcess().Kill();
             }
             catch (Exception ex)
             {
@@ -347,7 +393,7 @@ namespace Genshin_Impact_Tasks.Popups
         #endregion
 
         #region 진동 스위치 토글 시
-        private async void VibrationSwitch_Toggled(object sender, ToggledEventArgs e)
+        private void VibrationSwitch_Toggled(object sender, ToggledEventArgs e)
         {
             try
             {
@@ -357,23 +403,45 @@ namespace Genshin_Impact_Tasks.Popups
                 vibrationDb.Value = VibrationSwitch.IsToggled ? "On" : "Off";
                 App.Database.Update(vibrationDb);
 
-                if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                {
-                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).Where(item => item.Object.Key == "Vibration").FirstOrDefault();
-                    update.Object.Value = vibrationDb.Value;
-                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").Child(update.Key).PutAsync(update.Object);
-                }
-                else
-                {
-                    var localDb = App.UpdateHistoryDb.Table<SettingTable>().ToList().Where(t => t.Key == "Vibration");
-
-                    if (localDb.ToList().Count > 0)
-                        App.UpdateHistoryDb.Update(vibrationDb);
-                    else
-                        App.UpdateHistoryDb.Insert(vibrationDb);
-                }
-
                 App.UseVibration = VibrationSwitch.IsToggled;
+            }
+            catch (Exception ex)
+            {
+                App.DisplayEx(ex);
+            }
+        }
+        #endregion
+
+        #region 완료된 할 일 삭제 주기 변경 시
+        private async void TADDayPicker_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                if (ClassId == "0") return;
+
+                if (TaskTabView.AutoSync && Connectivity.NetworkAccess != NetworkAccess.Internet)
+                {
+                    TADDayPicker.SelectedIndex = PreviousSelected;
+
+                    await App.Current.MainPage.DisplayAlert("설정 변경",
+                        "인터넷에 연결되어 있지 않아 일부 설정을 변경할 수 없습니다.\n" +
+                        "인터넷 상태를 확인하신 후 다시 시도해주시기 바랍니다.", "확인");
+                    return;
+                }
+
+                if (TaskTabView.AutoSync)
+                {
+                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).Where(item => item.Object.Key == "TaskAutoDelete").FirstOrDefault();
+                    update.Object.Value = TADDayPicker.SelectedIndex.ToString();
+                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").Child(update.Key).PutAsync(update.Object);
+                    App.UpdateServerSyncDate();
+                }
+
+                var tadDb = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "TaskAutoDelete").FirstOrDefault();
+                tadDb.Value = TADDayPicker.SelectedIndex.ToString();
+                App.Database.Update(tadDb);
+
+                PreviousSelected = TADDayPicker.SelectedIndex;
             }
             catch (Exception ex)
             {
@@ -410,32 +478,41 @@ namespace Genshin_Impact_Tasks.Popups
         }
         #endregion
 
-        #region 완료된 할 일 삭제 주기 변경 시
-        private async void TADDayPicker_SelectedIndexChanged(object sender, EventArgs e)
+        #region 버그 제보/건의 사항 버튼 클릭 시
+        private async void BugFeedbackButton_Clicked(object sender, EventArgs e)
         {
             try
             {
-                if (ClassId == "0") return;
+                var button = sender as Button;
 
-                var tadDb = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "TaskAutoDelete").FirstOrDefault();
-                tadDb.Value = TADDayPicker.SelectedIndex.ToString();
-                App.Database.Update(tadDb);
+                var subject = "";
+                var body = "";
 
-                if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
+                switch (button.ClassId)
                 {
-                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).Where(item => item.Object.Key == "TaskAutoDelete").FirstOrDefault();
-                    update.Object.Value = tadDb.Value;
-                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").Child(update.Key).PutAsync(update.Object);
+                    case "Bug":
+                        subject = "원신 태스크 - 버그 제보";
+                        body = "- 모든 정보들은 버그 수정을 위해서만 쓰입니다." +
+                            "\n\n# 디바이스 모델명: " + "(" + DeviceInfo.Manufacturer + ") " + DeviceInfo.Model +
+                            "\n# OS 버전: " + DeviceInfo.Platform + " " + DeviceInfo.VersionString +
+                            "\n\n# 버그 발생 계기: " +
+                            "\n어떻게 해서 버그가 발생했는지 알려주시면 버그 수정에 도움이됩니다." +
+                            "\n예) 할 일을 삭제하였더니 갑자기 튕겼습니다.\n\n- ";
+                        break;
+                    case "Feedback":
+                        subject = "원신 태스크 - 건의 사항";
+                        body = "# 추가 또는 변경되었으면 좋을 것 같은 기능을 알려주세요." +
+                            "\n\n- ";
+                        break;
                 }
-                else
-                {
-                    var localDb = App.UpdateHistoryDb.Table<SettingTable>().ToList().Where(t => t.Key == "TaskAutoDelete");
 
-                    if (localDb.ToList().Count > 0)
-                        App.UpdateHistoryDb.Update(tadDb);
-                    else
-                        App.UpdateHistoryDb.Insert(tadDb);
-                }
+                var email = new EmailMessage
+                {
+                    Subject = subject,
+                    Body = body,
+                    To = new List<string> { "banb3515@outlook.kr" }
+                };
+                await Email.ComposeAsync(email);
             }
             catch (Exception ex)
             {

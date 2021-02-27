@@ -1,4 +1,5 @@
-﻿using Firebase.Database.Query;
+﻿using Firebase.Database;
+using Firebase.Database.Query;
 
 using Genshin_Impact_Tasks.Models;
 using Genshin_Impact_Tasks.Popups;
@@ -18,14 +19,18 @@ namespace Genshin_Impact_Tasks.Pages
 	[XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class TaskTabView : ContentView
     {
-        public static bool TimerRepeat { get; set; }
+        public static TaskTabView Instance { get; set; }
 
-        string CurrentTaskList { get; set; } = "Daily"; // 현재 할 일 목록
+        public static bool TimerRepeat { get; set; } = true;
+        public static bool AutoSync { get; set; } = false;
+        private bool Synchronizing { get; set; } = false;
 
-        List<TaskModel> DailyTasks { get; set; } // 일일 반복 할 일
-        List<TaskModel> WeeklyTasks { get; set; } // 주간 반복 할 일
-        List<TaskModel> OneTimeTasks { get; set; } // 일회성 할 일
-        List<TaskModel> CompleteOneTimeTasks { get; set; } // 완료된 일회성 할 일
+        private string CurrentTaskList { get; set; } = "Daily"; // 현재 할 일 목록
+
+        private List<TaskModel> DailyTasks { get; set; } // 일일 반복 할 일
+        private List<TaskModel> WeeklyTasks { get; set; } // 주간 반복 할 일
+        private List<TaskModel> OneTimeTasks { get; set; } // 일회성 할 일
+        private List<TaskModel> CompleteOneTimeTasks { get; set; } // 완료된 일회성 할 일
 
         public TaskTabView()
         {
@@ -33,7 +38,12 @@ namespace Genshin_Impact_Tasks.Pages
             {
                 InitializeComponent();
 
+                if (Device.RuntimePlatform == Device.Android)
+                    RefreshTasksViewButton.IsVisible = false;
+
                 Init();
+
+                Instance = this;
             }
             catch (Exception ex)
             {
@@ -47,24 +57,23 @@ namespace Genshin_Impact_Tasks.Pages
             try
             {
                 // 변수 초기화
-                TimerRepeat = true;
+                if (App.SyncMail != "")
+                    AutoSync = true;
+
                 DailyTasks = new List<TaskModel>();
                 WeeklyTasks = new List<TaskModel>();
                 OneTimeTasks = new List<TaskModel>();
                 CompleteOneTimeTasks = new List<TaskModel>();
 
-                #region 데이터베이스 값 가져오기
-                // 일일 반복
-                App.Database.Table<DailyTaskTable>().ToList().ForEach(task => { DailyTasks.Add(new TaskModel { No = task.No, Content = task.Content, IconPath = task.IconPath, Status = task.Status }); });
-
-                // 주간 반복
-                App.Database.Table<WeeklyTaskTable>().ToList().ForEach(task => { WeeklyTasks.Add(new TaskModel { No = task.No, Content = task.Content, IconPath = task.IconPath, Status = task.Status }); });
-
-                // 일회성
-                App.Database.Table<OneTimeTaskTable>().ToList().ForEach(task => 
-                { 
+                #region 데이터 가져오기
+                App.Database.Table<DailyTaskTable>().ToList().ForEach(task =>
+                { DailyTasks.Add(new TaskModel { No = task.No, Content = task.Content, IconPath = task.IconPath, Status = task.Status }); });
+                App.Database.Table<WeeklyTaskTable>().ToList().ForEach(task =>
+                { WeeklyTasks.Add(new TaskModel { No = task.No, Content = task.Content, IconPath = task.IconPath, Status = task.Status }); });
+                App.Database.Table<OneTimeTaskTable>().ToList().ForEach(task =>
+                {
                     if (!task.Status)
-                        OneTimeTasks.Add(new TaskModel { No = task.No, Content = task.Content, IconPath = task.IconPath, Status = task.Status }); 
+                        OneTimeTasks.Add(new TaskModel { No = task.No, Content = task.Content, IconPath = task.IconPath, Status = task.Status });
                     else
                         CompleteOneTimeTasks.Add(new TaskModel { No = task.No, Content = task.Content, IconPath = task.IconPath, Status = task.Status });
                 });
@@ -76,7 +85,12 @@ namespace Genshin_Impact_Tasks.Pages
                 // 날짜 변경 감지
                 Device.StartTimer(TimeSpan.FromSeconds(1), OnDetectDateChange);
 
-                Device.StartTimer(TimeSpan.FromMinutes(1), OnAutoSync);
+                // 완료된 할 일 자동 삭제
+                Device.StartTimer(TimeSpan.FromMinutes(1), OnTaskAutoDelete);
+
+                // 자동 동기화
+                if (AutoSync)
+                    Device.StartTimer(TimeSpan.FromSeconds(5), OnAutoSync);
 
                 if (App.UseDarkMode)
                     Divider.Color = Color.White;
@@ -95,6 +109,69 @@ namespace Genshin_Impact_Tasks.Pages
             {
                 if (!TimerRepeat) return true;
 
+                DateChange();
+            }
+            catch (Exception ex)
+            {
+                App.DisplayEx(ex);
+            }
+
+            return true;
+        }
+        #endregion
+
+        #region 완료된 할 일 자동 삭제
+        private bool OnTaskAutoDelete()
+        {
+            try
+            {
+                if (!AutoSync) return true;
+
+                TaskAutoDelete();
+            }
+            catch (Exception ex)
+            {
+                App.DisplayEx(ex);
+            }
+
+            return true;
+        }
+        #endregion
+
+        #region 자동 동기화
+        public bool OnAutoSync()
+        {
+            try
+            {
+                if (Synchronizing || Connectivity.NetworkAccess != NetworkAccess.Internet)
+                {
+                    if (TasksRefreshView.IsRefreshing)
+                        TasksRefreshView.IsRefreshing = false;
+
+                    if (!RefreshTasksViewButton.IsEnabled)
+                        RefreshTasksViewButton.IsEnabled = true;
+                    return true;
+                }
+
+                Synchronize();
+
+                if (TasksRefreshView.IsRefreshing)
+                    TasksRefreshView.IsRefreshing = false;
+            }
+            catch (Exception ex)
+            {
+                App.DisplayEx(ex);
+            }
+
+            return true;
+        }
+        #endregion
+
+        #region 날짜 변경
+        public async void DateChange()
+        {
+            try
+            {
                 var date = Convert.ToDateTime(App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "Date").FirstOrDefault().Value);
 
                 DateTime current;
@@ -104,27 +181,20 @@ namespace Genshin_Impact_Tasks.Pages
                 #region 일일 반복 초기화
                 if (current.ToString("yyyyMMdd") != date.ToString("yyyyMMdd"))
                 {
-                    App.Database.Table<DailyTaskTable>().ToList().ForEach(async t =>
-                    {
-                        t.Status = false;
-                        App.Database.Update(t);
+                    if (Connectivity.NetworkAccess == NetworkAccess.Internet) return;
 
-                        if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
+                    foreach (var t in App.Database.Table<DailyTaskTable>().ToList())
+                    {
+                        if (AutoSync)
                         {
                             var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").OnceAsync<DailyTaskTable>()).Where(item => item.Object.No == t.No).FirstOrDefault();
                             update.Object.Status = false;
                             await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").Child(update.Key).PutAsync(update.Object);
                         }
-                        else
-                        {
-                            var localDb = App.UpdateHistoryDb.Table<DailyTaskTable>().ToList().Where(tt => tt.No == t.No);
 
-                            if (localDb.ToList().Count > 0)
-                                App.UpdateHistoryDb.Update(t);
-                            else 
-                                App.UpdateHistoryDb.Insert(t);
-                        }
-                    });
+                        t.Status = false;
+                        App.Database.Update(t);
+                    }
 
                     for (int i = 0; i < DailyTasks.Count; i++)
                         DailyTasks[i].Status = false;
@@ -132,32 +202,33 @@ namespace Genshin_Impact_Tasks.Pages
                     #region 주간 반복 초기화
                     if (current.DayOfWeek == DayOfWeek.Monday)
                     {
-                        App.Database.Table<WeeklyTaskTable>().ToList().ForEach(async t =>
-                        {
-                            t.Status = false;
-                            App.Database.Update(t);
+                        if (Connectivity.NetworkAccess == NetworkAccess.Internet) return;
 
-                            if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
+                        foreach (var t in App.Database.Table<WeeklyTaskTable>().ToList())
+                        {
+                            if (AutoSync)
                             {
                                 var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").OnceAsync<WeeklyTaskTable>()).Where(item => item.Object.No == t.No).FirstOrDefault();
                                 update.Object.Status = false;
                                 await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").Child(update.Key).PutAsync(update.Object);
                             }
-                            else
-                            {
-                                var localDb = App.UpdateHistoryDb.Table<WeeklyTaskTable>().ToList().Where(tt => tt.No == t.No);
 
-                                if (localDb.ToList().Count > 0)
-                                    App.UpdateHistoryDb.Update(t);
-                                else
-                                    App.UpdateHistoryDb.Insert(t);
-                            }
-                        });
+                            t.Status = false;
+                            App.Database.Update(t);
+                        }
 
                         for (int i = 0; i < WeeklyTasks.Count; i++)
                             WeeklyTasks[i].Status = false;
                     }
                     #endregion
+
+                    if (AutoSync)
+                    {
+                        var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).Where(item => item.Object.Key == "Date").FirstOrDefault();
+                        update.Object.Value = current.ToString();
+                        await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").Child(update.Key).PutAsync(update.Object);
+                        App.UpdateServerSyncDate();
+                    }
 
                     var dateDb = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "Date").FirstOrDefault();
                     dateDb.Value = current.ToString();
@@ -171,31 +242,147 @@ namespace Genshin_Impact_Tasks.Pages
             {
                 App.DisplayEx(ex);
             }
-
-            return true;
         }
         #endregion
 
-        #region 자동 동기화
-        private bool OnAutoSync()
+        #region 할 일 자동 삭제
+        public async void TaskAutoDelete()
         {
             try
             {
-                if (Connectivity.NetworkAccess != NetworkAccess.Internet) return true;
+                var tadDay = Convert.ToInt32(App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "TaskAutoDelete").FirstOrDefault().Value);
 
+                if (AutoSync && Connectivity.NetworkAccess != NetworkAccess.Internet) return;
 
+                if (tadDay > 0)
+                {
+                    var currentTime = DateTime.Now;
+
+                    foreach (var task in App.Database.Table<OneTimeTaskTable>().ToList())
+                    {
+                        if (task.Status)
+                        {
+                            var completeTime = Convert.ToDateTime(task.CompleteTime);
+                            completeTime = completeTime.AddDays(tadDay);
+
+                            if (DateTime.Compare(completeTime, currentTime) < 0)
+                            {
+                                if (AutoSync)
+                                {
+                                    var del = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == task.No).FirstOrDefault();
+                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(del.Key).DeleteAsync();
+                                    App.UpdateServerSyncDate();
+                                }
+
+                                App.Database.Delete(task);
+                            }
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
                 App.DisplayEx(ex);
             }
+        }
+        #endregion
 
-            return true;
+        #region 동기화
+        public async void Synchronize()
+        {
+            try
+            {
+                try
+                {
+                    Synchronizing = true;
+
+                    if (Connectivity.NetworkAccess != NetworkAccess.Internet)
+                    {
+                        Synchronizing = false;
+                        return;
+                    }
+
+                    var localSyncDateStr = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "SyncDate").FirstOrDefault().Value;
+                    DateTime localSyncDate = DateTime.Now;
+
+                    bool pass = false;
+
+                    if (localSyncDateStr == "")
+                        pass = true;
+                    else
+                        localSyncDate = Convert.ToDateTime(localSyncDateStr);
+
+                    var serverSyncDate = Convert.ToDateTime((await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).Where(item => item.Object.Key == "SyncDate").FirstOrDefault().Object.Value);
+
+                    if (!pass && DateTime.Compare(localSyncDate, serverSyncDate) >= 0)
+                    {
+                        Synchronizing = false;
+                        return;
+                    }
+
+                    (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).ToList().ForEach(item =>
+                    {
+                        if (item.Object.Key != "Theme" && item.Object.Key != "Vibration" && item.Object.Key != "SyncMail" && item.Object.Key != "HowToUse" && item.Object.Key != "Version")
+                            App.Database.Update(item.Object);
+                    });
+                    App.Database.DropTable<DailyTaskTable>();
+                    App.Database.DropTable<WeeklyTaskTable>();
+                    App.Database.DropTable<OneTimeTaskTable>();
+
+                    App.Database.CreateTable<DailyTaskTable>();
+                    App.Database.CreateTable<WeeklyTaskTable>();
+                    App.Database.CreateTable<OneTimeTaskTable>();
+
+                    (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").OnceAsync<DailyTaskTable>()).ToList().ForEach(item =>
+                    {
+                        App.Database.Insert(item.Object);
+                    });
+
+                    (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").OnceAsync<WeeklyTaskTable>()).ToList().ForEach(item =>
+                    {
+                        App.Database.Insert(item.Object);
+                    });
+                    (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).ToList().ForEach(item =>
+                    {
+                        App.Database.Insert(item.Object);
+                    });
+
+                    App.UpdateLocalSyncDate();
+
+                    // 일일 반복
+                    DailyTasks = new List<TaskModel>();
+                    App.Database.Table<DailyTaskTable>().ToList().ForEach(task => { DailyTasks.Add(new TaskModel { No = task.No, Content = task.Content, IconPath = task.IconPath, Status = task.Status }); });
+
+                    // 주간 반복
+                    WeeklyTasks = new List<TaskModel>();
+                    App.Database.Table<WeeklyTaskTable>().ToList().ForEach(task => { WeeklyTasks.Add(new TaskModel { No = task.No, Content = task.Content, IconPath = task.IconPath, Status = task.Status }); });
+
+                    // 일회성
+                    OneTimeTasks = new List<TaskModel>();
+                    CompleteOneTimeTasks = new List<TaskModel>();
+                    App.Database.Table<OneTimeTaskTable>().ToList().ForEach(task =>
+                    {
+                        if (!task.Status)
+                            OneTimeTasks.Add(new TaskModel { No = task.No, Content = task.Content, IconPath = task.IconPath, Status = task.Status });
+                        else
+                            CompleteOneTimeTasks.Add(new TaskModel { No = task.No, Content = task.Content, IconPath = task.IconPath, Status = task.Status });
+                    });
+
+                    TaskListRefresh();
+
+                    Synchronizing = false;
+                }
+                catch (FirebaseException) { }
+            }
+            catch (Exception ex)
+            {
+                App.DisplayEx(ex);
+            }
         }
         #endregion
 
         #region 할 일 목록 새로고침
-        private void TaskListRefresh()
+        public void TaskListRefresh()
         {
             try
             {
@@ -226,6 +413,9 @@ namespace Genshin_Impact_Tasks.Pages
                         }
                         break;
                 }
+
+                if (TasksRefreshView.IsRefreshing)
+                    TasksRefreshView.IsRefreshing = false;
             }
             catch (Exception ex)
             {
@@ -239,53 +429,49 @@ namespace Genshin_Impact_Tasks.Pages
         {
             try
             {
+                if (AutoSync && Connectivity.NetworkAccess != NetworkAccess.Internet)
+                {
+                    await App.Current.MainPage.DisplayAlert("할 일",
+                        "인터넷에 연결되어 있지 않아 완료 상태를 변경할 수 없습니다.\n" +
+                        "인터넷 상태를 확인하신 후 다시 시도해주시기 바랍니다.", "확인");
+                    return;
+                }
+
+                if (TasksView.ClassId == "1") return;
+
+                TasksView.ClassId = "1";
+
                 var idx = e.ItemIndex;
 
                 switch (CurrentTaskList)
                 {
                     case "Daily":
+                        if (AutoSync)
+                        {
+                            var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").OnceAsync<DailyTaskTable>()).Where(item => item.Object.No == DailyTasks[idx].No).FirstOrDefault();
+                            update.Object.Status = !update.Object.Status;
+                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").Child(update.Key).PutAsync(update.Object);
+                            App.UpdateServerSyncDate();
+                        }
+
                         var dailyDb = App.Database.Table<DailyTaskTable>().ToList().Where(t => t.No == DailyTasks[idx].No).FirstOrDefault();
                         dailyDb.Status = !dailyDb.Status;
                         App.Database.Update(dailyDb);
 
-                        if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                        {
-                            var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").OnceAsync<DailyTaskTable>()).Where(item => item.Object.No == dailyDb.No).FirstOrDefault();
-                            update.Object.Status = !update.Object.Status;
-                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").Child(update.Key).PutAsync(update.Object);
-                        }
-                        else
-                        {
-                            var localDb = App.UpdateHistoryDb.Table<DailyTaskTable>().ToList().Where(t => t.No == dailyDb.No);
-
-                            if (localDb.ToList().Count > 0)
-                                App.UpdateHistoryDb.Update(dailyDb);
-                            else
-                                App.UpdateHistoryDb.Insert(dailyDb);
-                        }
-
                         DailyTasks[idx].Status = !DailyTasks[idx].Status;
                         break;
                     case "Weekly":
+                        if (AutoSync)
+                        {
+                            var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").OnceAsync<WeeklyTaskTable>()).Where(item => item.Object.No == WeeklyTasks[idx].No).FirstOrDefault();
+                            update.Object.Status = !update.Object.Status;
+                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").Child(update.Key).PutAsync(update.Object);
+                            App.UpdateServerSyncDate();
+                        }
+
                         var weeklyDb = App.Database.Table<WeeklyTaskTable>().ToList().Where(t => t.No == WeeklyTasks[idx].No).FirstOrDefault();
                         weeklyDb.Status = !weeklyDb.Status;
                         App.Database.Update(weeklyDb);
-
-                        if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                        {
-                            var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").OnceAsync<WeeklyTaskTable>()).Where(item => item.Object.No == weeklyDb.No).FirstOrDefault();
-                            update.Object.Status = !update.Object.Status;
-                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").Child(update.Key).PutAsync(update.Object);
-                        }
-                        else
-                        {
-                            var localDb = App.UpdateHistoryDb.Table<WeeklyTaskTable>().ToList().Where(t => t.No == weeklyDb.No);
-
-                            if (localDb.ToList().Count > 0)
-                                App.UpdateHistoryDb.Update(weeklyDb);
-                            else
-                                App.UpdateHistoryDb.Insert(weeklyDb);
-                        }
 
                         WeeklyTasks[idx].Status = !WeeklyTasks[idx].Status;
                         break;
@@ -293,26 +479,17 @@ namespace Genshin_Impact_Tasks.Pages
                         switch (OTTCompleteListButton.Text)
                         {
                             case "완료 보기":
+                                if (AutoSync)
+                                {
+                                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == OneTimeTasks[idx].No).FirstOrDefault();
+                                    update.Object.Status = !update.Object.Status;
+                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(update.Key).PutAsync(update.Object);
+                                    App.UpdateServerSyncDate();
+                                }
+
                                 var oneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.No == OneTimeTasks[idx].No).FirstOrDefault();
                                 oneTimeDb.Status = !oneTimeDb.Status;
                                 oneTimeDb.CompleteTime = DateTime.Now.ToString();
-
-                                if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                {
-                                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == oneTimeDb.No).FirstOrDefault();
-                                    update.Object.Status = !update.Object.Status;
-                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(update.Key).PutAsync(update.Object);
-                                }
-                                else
-                                {
-                                    var localDb = App.UpdateHistoryDb.Table<OneTimeTaskTable>().ToList().Where(t => t.No == oneTimeDb.No);
-
-                                    if (localDb.ToList().Count > 0)
-                                        App.UpdateHistoryDb.Update(oneTimeDb);
-                                    else
-                                        App.UpdateHistoryDb.Insert(oneTimeDb);
-                                }
-
                                 App.Database.Update(oneTimeDb);
 
                                 var oneTimeTmp = OneTimeTasks[idx];
@@ -321,26 +498,17 @@ namespace Genshin_Impact_Tasks.Pages
                                 OneTimeTasks.RemoveAt(idx);
                                 break;
                             case "미완료 보기":
+                                if (AutoSync)
+                                {
+                                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == CompleteOneTimeTasks[idx].No).FirstOrDefault();
+                                    update.Object.Status = !update.Object.Status;
+                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(update.Key).PutAsync(update.Object);
+                                    App.UpdateServerSyncDate();
+                                }
+
                                 var cOneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.No == CompleteOneTimeTasks[idx].No).FirstOrDefault();
                                 cOneTimeDb.Status = !cOneTimeDb.Status;
                                 cOneTimeDb.CompleteTime = "";
-
-                                if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                {
-                                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == cOneTimeDb.No).FirstOrDefault();
-                                    update.Object.Status = !update.Object.Status;
-                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(update.Key).PutAsync(update.Object);
-                                }
-                                else
-                                {
-                                    var localDb = App.UpdateHistoryDb.Table<OneTimeTaskTable>().ToList().Where(t => t.No == cOneTimeDb.No);
-
-                                    if (localDb.ToList().Count > 0)
-                                        App.UpdateHistoryDb.Update(cOneTimeDb);
-                                    else
-                                        App.UpdateHistoryDb.Insert(cOneTimeDb);
-                                }
-
                                 App.Database.Update(cOneTimeDb);
 
                                 var cOneTimeTmp = CompleteOneTimeTasks[idx];
@@ -357,6 +525,8 @@ namespace Genshin_Impact_Tasks.Pages
                 // 안드로이드, 진동 0.05초 동안 울림
                 if (App.UseVibration && Device.RuntimePlatform == Device.Android)
                     Vibration.Vibrate(TimeSpan.FromMilliseconds(50));
+
+                TasksView.ClassId = "0";
             }
             catch (Exception ex)
             {
@@ -455,6 +625,14 @@ namespace Genshin_Impact_Tasks.Pages
         {
             try
             {
+                if (AutoSync && Connectivity.NetworkAccess != NetworkAccess.Internet)
+                {
+                    await App.Current.MainPage.DisplayAlert("할 일",
+                        "인터넷에 연결되어 있지 않아 수정 또는 삭제를 할 수 없습니다.\n" +
+                        "인터넷 상태를 확인하신 후 다시 시도해주시기 바랍니다.", "확인");
+                    return;
+                }
+
                 var answer = await App.Current.MainPage.DisplayActionSheet("더 보기", "취소", null, "아이콘 변경", "내용 편집", "삭제");
 
                 var no = Convert.ToInt32((sender as ImageButton).CommandParameter.ToString());
@@ -497,51 +675,43 @@ namespace Genshin_Impact_Tasks.Pages
                         {
                             if (arg.IconPath != null)
                             {
+                                if (AutoSync && Connectivity.NetworkAccess != NetworkAccess.Internet)
+                                {
+                                    await App.Current.MainPage.DisplayAlert("할 일",
+                                        "인터넷에 연결되어 있지 않아 아이콘을 변경할 수 없습니다.\n" +
+                                        "인터넷 상태를 확인하신 후 다시 시도해주시기 바랍니다.", "확인");
+                                    return;
+                                }
+
                                 switch (CurrentTaskList)
                                 {
                                     case "Daily":
+                                        if (AutoSync)
+                                        {
+                                            var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").OnceAsync<DailyTaskTable>()).Where(item => item.Object.No == DailyTasks[idx].No).FirstOrDefault();
+                                            update.Object.IconPath = arg.IconPath;
+                                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").Child(update.Key).PutAsync(update.Object);
+                                            App.UpdateServerSyncDate();
+                                        }
+
                                         var dailyDb = App.Database.Table<DailyTaskTable>().ToList().Where(t => t.No == DailyTasks[idx].No).FirstOrDefault();
                                         dailyDb.IconPath = arg.IconPath;
                                         App.Database.Update(dailyDb);
 
-                                        if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                        {
-                                            var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").OnceAsync<DailyTaskTable>()).Where(item => item.Object.No == dailyDb.No).FirstOrDefault();
-                                            update.Object.IconPath = arg.IconPath;
-                                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").Child(update.Key).PutAsync(update.Object);
-                                        }
-                                        else
-                                        {
-                                            var localDb = App.UpdateHistoryDb.Table<DailyTaskTable>().ToList().Where(t => t.No == dailyDb.No);
-
-                                            if (localDb.ToList().Count > 0)
-                                                App.UpdateHistoryDb.Update(dailyDb);
-                                            else
-                                                App.UpdateHistoryDb.Insert(dailyDb);
-                                        }
-
                                         DailyTasks[idx].IconPath = arg.IconPath;
                                         break;
                                     case "Weekly":
+                                        if (AutoSync)
+                                        {
+                                            var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").OnceAsync<WeeklyTaskTable>()).Where(item => item.Object.No == WeeklyTasks[idx].No).FirstOrDefault();
+                                            update.Object.IconPath = arg.IconPath;
+                                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").Child(update.Key).PutAsync(update.Object);
+                                            App.UpdateServerSyncDate();
+                                        }
+
                                         var weeklyDb = App.Database.Table<WeeklyTaskTable>().ToList().Where(t => t.No == WeeklyTasks[idx].No).FirstOrDefault();
                                         weeklyDb.IconPath = arg.IconPath;
                                         App.Database.Update(weeklyDb);
-
-                                        if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                        {
-                                            var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").OnceAsync<WeeklyTaskTable>()).Where(item => item.Object.No == weeklyDb.No).FirstOrDefault();
-                                            update.Object.IconPath = arg.IconPath;
-                                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").Child(update.Key).PutAsync(update.Object);
-                                        }
-                                        else
-                                        {
-                                            var localDb = App.UpdateHistoryDb.Table<WeeklyTaskTable>().ToList().Where(t => t.No == weeklyDb.No);
-
-                                            if (localDb.ToList().Count > 0)
-                                                App.UpdateHistoryDb.Update(weeklyDb);
-                                            else
-                                                App.UpdateHistoryDb.Insert(weeklyDb);
-                                        }
 
                                         WeeklyTasks[idx].IconPath = arg.IconPath;
                                         break;
@@ -549,48 +719,32 @@ namespace Genshin_Impact_Tasks.Pages
                                         switch (OTTCompleteListButton.Text)
                                         {
                                             case "완료 보기":
+                                                if (AutoSync)
+                                                {
+                                                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == OneTimeTasks[idx].No).FirstOrDefault();
+                                                    update.Object.IconPath = arg.IconPath;
+                                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(update.Key).PutAsync(update.Object);
+                                                    App.UpdateServerSyncDate();
+                                                }
+
                                                 var oneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.No == OneTimeTasks[idx].No).FirstOrDefault();
                                                 oneTimeDb.IconPath = arg.IconPath;
                                                 App.Database.Update(oneTimeDb);
 
-                                                if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                                {
-                                                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == oneTimeDb.No).FirstOrDefault();
-                                                    update.Object.IconPath = arg.IconPath;
-                                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(update.Key).PutAsync(update.Object);
-                                                }
-                                                else
-                                                {
-                                                    var localDb = App.UpdateHistoryDb.Table<OneTimeTaskTable>().ToList().Where(t => t.No == oneTimeDb.No);
-
-                                                    if (localDb.ToList().Count > 0)
-                                                        App.UpdateHistoryDb.Update(oneTimeDb);
-                                                    else
-                                                        App.UpdateHistoryDb.Insert(oneTimeDb);
-                                                }
-
                                                 OneTimeTasks[idx].IconPath = arg.IconPath;
                                                 break;
                                             case "미완료 보기":
+                                                if (AutoSync)
+                                                {
+                                                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == CompleteOneTimeTasks[idx].No).FirstOrDefault();
+                                                    update.Object.IconPath = arg.IconPath;
+                                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(update.Key).PutAsync(update.Object);
+                                                    App.UpdateServerSyncDate();
+                                                }
+
                                                 var cOneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.No == CompleteOneTimeTasks[idx].No).FirstOrDefault();
                                                 cOneTimeDb.IconPath = arg.IconPath;
                                                 App.Database.Update(cOneTimeDb);
-
-                                                if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                                {
-                                                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == cOneTimeDb.No).FirstOrDefault();
-                                                    update.Object.IconPath = arg.IconPath;
-                                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(update.Key).PutAsync(update.Object);
-                                                }
-                                                else
-                                                {
-                                                    var localDb = App.UpdateHistoryDb.Table<OneTimeTaskTable>().ToList().Where(t => t.No == cOneTimeDb.No);
-
-                                                    if (localDb.ToList().Count > 0)
-                                                        App.UpdateHistoryDb.Update(cOneTimeDb);
-                                                    else
-                                                        App.UpdateHistoryDb.Insert(cOneTimeDb);
-                                                }
 
                                                 CompleteOneTimeTasks[idx].IconPath = arg.IconPath;
                                                 break;
@@ -612,53 +766,45 @@ namespace Genshin_Impact_Tasks.Pages
 
                         if (string.IsNullOrWhiteSpace(newContent)) return;
 
+                        if (AutoSync && Connectivity.NetworkAccess != NetworkAccess.Internet)
+                        {
+                            await App.Current.MainPage.DisplayAlert("할 일",
+                                "인터넷에 연결되어 있지 않아 내용 편집을 할 수 없습니다.\n" +
+                                "인터넷 상태를 확인하신 후 다시 시도해주시기 바랍니다.", "확인");
+                            return;
+                        }
+
                         newContent = newContent.Trim();
 
                         switch (CurrentTaskList)
                         {
                             case "Daily":
+                                if (AutoSync)
+                                {
+                                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").OnceAsync<DailyTaskTable>()).Where(item => item.Object.No == DailyTasks[idx].No).FirstOrDefault();
+                                    update.Object.Content = newContent;
+                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").Child(update.Key).PutAsync(update.Object);
+                                    App.UpdateServerSyncDate();
+                                }
+
                                 var dailyDb = App.Database.Table<DailyTaskTable>().ToList().Where(t => t.No == DailyTasks[idx].No).FirstOrDefault();
                                 dailyDb.Content = newContent;
                                 App.Database.Update(dailyDb);
 
-                                if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                {
-                                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").OnceAsync<DailyTaskTable>()).Where(item => item.Object.No == dailyDb.No).FirstOrDefault();
-                                    update.Object.Content = newContent;
-                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").Child(update.Key).PutAsync(update.Object);
-                                }
-                                else
-                                {
-                                    var localDb = App.UpdateHistoryDb.Table<DailyTaskTable>().ToList().Where(t => t.No == dailyDb.No);
-
-                                    if (localDb.ToList().Count > 0)
-                                        App.UpdateHistoryDb.Update(dailyDb);
-                                    else
-                                        App.UpdateHistoryDb.Insert(dailyDb);
-                                }
-                                
                                 DailyTasks[idx].Content = newContent;
                                 break;
                             case "Weekly":
+                                if (AutoSync)
+                                {
+                                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").OnceAsync<WeeklyTaskTable>()).Where(item => item.Object.No == WeeklyTasks[idx].No).FirstOrDefault();
+                                    update.Object.Content = newContent;
+                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").Child(update.Key).PutAsync(update.Object);
+                                    App.UpdateServerSyncDate();
+                                }
+
                                 var weeklyDb = App.Database.Table<WeeklyTaskTable>().ToList().Where(t => t.No == WeeklyTasks[idx].No).FirstOrDefault();
                                 weeklyDb.Content = newContent;
                                 App.Database.Update(weeklyDb);
-
-                                if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                {
-                                    var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").OnceAsync<WeeklyTaskTable>()).Where(item => item.Object.No == weeklyDb.No).FirstOrDefault();
-                                    update.Object.Content = newContent;
-                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").Child(update.Key).PutAsync(update.Object);
-                                }
-                                else
-                                {
-                                    var localDb = App.UpdateHistoryDb.Table<WeeklyTaskTable>().ToList().Where(t => t.No == weeklyDb.No);
-
-                                    if (localDb.ToList().Count > 0)
-                                        App.UpdateHistoryDb.Update(weeklyDb);
-                                    else
-                                        App.UpdateHistoryDb.Insert(weeklyDb);
-                                }
 
                                 WeeklyTasks[idx].Content = newContent;
                                 break;
@@ -666,48 +812,32 @@ namespace Genshin_Impact_Tasks.Pages
                                 switch (OTTCompleteListButton.Text)
                                 {
                                     case "완료 보기":
+                                        if (AutoSync)
+                                        {
+                                            var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == OneTimeTasks[idx].No).FirstOrDefault();
+                                            update.Object.Content = newContent;
+                                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(update.Key).PutAsync(update.Object);
+                                            App.UpdateServerSyncDate();
+                                        }
+
                                         var oneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.No == OneTimeTasks[idx].No).FirstOrDefault();
                                         oneTimeDb.Content = newContent;
                                         App.Database.Update(oneTimeDb);
 
-                                        if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                        {
-                                            var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == oneTimeDb.No).FirstOrDefault();
-                                            update.Object.Content = newContent;
-                                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(update.Key).PutAsync(update.Object);
-                                        }
-                                        else
-                                        {
-                                            var localDb = App.UpdateHistoryDb.Table<OneTimeTaskTable>().ToList().Where(t => t.No == oneTimeDb.No);
-
-                                            if (localDb.ToList().Count > 0)
-                                                App.UpdateHistoryDb.Update(oneTimeDb);
-                                            else
-                                                App.UpdateHistoryDb.Insert(oneTimeDb);
-                                        }
-
                                         OneTimeTasks[idx].Content = newContent;
                                         break;
                                     case "미완료 보기":
+                                        if (AutoSync)
+                                        {
+                                            var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == CompleteOneTimeTasks[idx].No).FirstOrDefault();
+                                            update.Object.Content = newContent;
+                                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(update.Key).PutAsync(update.Object);
+                                            App.UpdateServerSyncDate();
+                                        }
+
                                         var cOneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.No == CompleteOneTimeTasks[idx].No).FirstOrDefault();
                                         cOneTimeDb.Content = newContent;
                                         App.Database.Update(cOneTimeDb);
-
-                                        if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                        {
-                                            var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == cOneTimeDb.No).FirstOrDefault();
-                                            update.Object.Content = newContent;
-                                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(update.Key).PutAsync(update.Object);
-                                        }
-                                        else
-                                        {
-                                            var localDb = App.UpdateHistoryDb.Table<OneTimeTaskTable>().ToList().Where(t => t.No == cOneTimeDb.No);
-
-                                            if (localDb.ToList().Count > 0)
-                                                App.UpdateHistoryDb.Update(cOneTimeDb);
-                                            else
-                                                App.UpdateHistoryDb.Insert(cOneTimeDb);
-                                        }
 
                                         CompleteOneTimeTasks[idx].Content = newContent;
                                         break;
@@ -723,33 +853,39 @@ namespace Genshin_Impact_Tasks.Pages
 
                         if (!remove) return;
 
+                        if (AutoSync && Connectivity.NetworkAccess != NetworkAccess.Internet)
+                        {
+                            await App.Current.MainPage.DisplayAlert("할 일",
+                                "인터넷에 연결되어 있지 않아 삭제할 수 없습니다.\n" +
+                                "인터넷 상태를 확인하신 후 다시 시도해주시기 바랍니다.", "확인");
+                            return;
+                        }
+
                         switch (CurrentTaskList)
                         {
                             case "Daily":
+                                if (AutoSync)
+                                {
+                                    var del = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").OnceAsync<DailyTaskTable>()).Where(item => item.Object.No == DailyTasks[idx].No).FirstOrDefault();
+                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").Child(del.Key).DeleteAsync();
+                                    App.UpdateServerSyncDate();
+                                }
+
                                 var dailyDb = App.Database.Table<DailyTaskTable>().ToList().Where(t => t.No == DailyTasks[idx].No).FirstOrDefault();
                                 App.Database.Delete(dailyDb);
 
-                                if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                {
-                                    var del = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").OnceAsync<DailyTaskTable>()).Where(item => item.Object.No == dailyDb.No).FirstOrDefault();
-                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").Child(del.Key).DeleteAsync();
-                                }
-                                else
-                                    App.DeleteHistoryDb.Insert(dailyDb);
-
-                                    DailyTasks.RemoveAt(idx);
+                                DailyTasks.RemoveAt(idx);
                                 break;
                             case "Weekly":
+                                if (AutoSync)
+                                {
+                                    var del = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").OnceAsync<WeeklyTaskTable>()).Where(item => item.Object.No == WeeklyTasks[idx].No).FirstOrDefault();
+                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").Child(del.Key).DeleteAsync();
+                                    App.UpdateServerSyncDate();
+                                }
+
                                 var weeklyDb = App.Database.Table<WeeklyTaskTable>().ToList().Where(t => t.No == WeeklyTasks[idx].No).FirstOrDefault();
                                 App.Database.Delete(weeklyDb);
-
-                                if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                {
-                                    var del = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").OnceAsync<WeeklyTaskTable>()).Where(item => item.Object.No == weeklyDb.No).FirstOrDefault();
-                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").Child(del.Key).DeleteAsync();
-                                }
-                                else
-                                    App.DeleteHistoryDb.Insert(weeklyDb);
 
                                 WeeklyTasks.RemoveAt(idx);
                                 break;
@@ -757,30 +893,28 @@ namespace Genshin_Impact_Tasks.Pages
                                 switch (OTTCompleteListButton.Text)
                                 {
                                     case "완료 보기":
+                                        if (AutoSync)
+                                        {
+                                            var del = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == OneTimeTasks[idx].No).FirstOrDefault();
+                                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(del.Key).DeleteAsync();
+                                            App.UpdateServerSyncDate();
+                                        }
+
                                         var oneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.No == OneTimeTasks[idx].No).FirstOrDefault();
                                         App.Database.Delete(oneTimeDb);
-
-                                        if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                        {
-                                            var del = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == oneTimeDb.No).FirstOrDefault();
-                                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(del.Key).DeleteAsync();
-                                        }
-                                        else
-                                            App.DeleteHistoryDb.Insert(oneTimeDb);
 
                                         OneTimeTasks.RemoveAt(idx);
                                         break;
                                     case "미완료 보기":
+                                        if (AutoSync)
+                                        {
+                                            var del = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == CompleteOneTimeTasks[idx].No).FirstOrDefault();
+                                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(del.Key).DeleteAsync();
+                                            App.UpdateServerSyncDate();
+                                        }
+
                                         var cOneTimeDb = App.Database.Table<OneTimeTaskTable>().ToList().Where(t => t.No == CompleteOneTimeTasks[idx].No).FirstOrDefault();
                                         App.Database.Delete(cOneTimeDb);
-
-                                        if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                        {
-                                            var del = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").OnceAsync<OneTimeTaskTable>()).Where(item => item.Object.No == cOneTimeDb.No).FirstOrDefault();
-                                            await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").Child(del.Key).DeleteAsync();
-                                        }
-                                        else
-                                            App.DeleteHistoryDb.Insert(cOneTimeDb);
 
                                         CompleteOneTimeTasks.RemoveAt(idx);
                                         break;
@@ -808,6 +942,16 @@ namespace Genshin_Impact_Tasks.Pages
         {
             try
             {
+                if (AutoSync && Connectivity.NetworkAccess != NetworkAccess.Internet)
+                {
+                    await App.Current.MainPage.DisplayAlert("할 일",
+                        "인터넷에 연결되어 있지 않아 할 일을 추가할 수 없습니다.\n" +
+                        "인터넷 상태를 확인하신 후 다시 시도해주시기 바랍니다.", "확인");
+                    return;
+                }
+
+                AddTaskButton.IsEnabled = false;
+
                 var popup = new AddTaskPopup(CurrentTaskList);
 
                 popup.OnClosed += async (s, arg) =>
@@ -817,37 +961,47 @@ namespace Genshin_Impact_Tasks.Pages
                         switch (CurrentTaskList)
                         {
                             case "Daily":
-                                var daily = new DailyTaskTable { Content = arg.Task.Content, IconPath = arg.Task.IconPath, Status = false, CreateTime = DateTime.Now.ToString() };
+                                var daily = new DailyTaskTable { No = DailyTasks.Count == 0 ? 1 : DailyTasks.Max(t => t.No) + 1, Content = arg.Task.Content, IconPath = arg.Task.IconPath, Status = false, CreateTime = DateTime.Now.ToString() };
+
+                                if (AutoSync)
+                                {
+                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").PostAsync(daily);
+                                    App.UpdateServerSyncDate();
+                                }
+
                                 App.Database.Insert(daily);
 
-                                if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("DailyTask").PostAsync(daily);
-                                else 
-                                    App.AddHistoryDb.Insert(daily);
-
-                                DailyTasks.Add(arg.Task);
+                                DailyTasks.Add(new TaskModel { No = daily.No, Content = daily.Content, IconPath = daily.IconPath, Status = daily.Status });
                                 break;
                             case "Weekly":
-                                var weekly = new WeeklyTaskTable { Content = arg.Task.Content, IconPath = arg.Task.IconPath, Status = false, CreateTime = DateTime.Now.ToString() };
+                                var weekly = new WeeklyTaskTable { No = WeeklyTasks.Count == 0 ? 1 : WeeklyTasks.Max(t => t.No) + 1, Content = arg.Task.Content, IconPath = arg.Task.IconPath, Status = false, CreateTime = DateTime.Now.ToString() };
+
+                                if (AutoSync)
+                                {
+                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").PostAsync(weekly);
+                                    App.UpdateServerSyncDate();
+                                }
+
                                 App.Database.Insert(weekly);
 
-                                if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("WeeklyTask").PostAsync(weekly);
-                                else
-                                    App.AddHistoryDb.Insert(weekly);
-
-                                WeeklyTasks.Add(arg.Task);
+                                WeeklyTasks.Add(new TaskModel { No = weekly.No, Content = weekly.Content, IconPath = weekly.IconPath, Status = weekly.Status });
                                 break;
                             case "OneTime":
-                                var oneTime = new OneTimeTaskTable { Content = arg.Task.Content, IconPath = arg.Task.IconPath, Status = false, CreateTime = DateTime.Now.ToString(), CompleteTime = "" };
+                                var tmp = new List<int>();
+                                foreach (var ott in OneTimeTasks) tmp.Add(ott.No);
+                                foreach (var cott in CompleteOneTimeTasks) tmp.Add(cott.No);
+
+                                var oneTime = new OneTimeTaskTable { No = tmp.Count == 0 ? 1 : tmp.Max() + 1, Content = arg.Task.Content, IconPath = arg.Task.IconPath, Status = false, CreateTime = DateTime.Now.ToString(), CompleteTime = "" };
+
+                                if (AutoSync)
+                                {
+                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").PostAsync(oneTime);
+                                    App.UpdateServerSyncDate();
+                                }
+                                
                                 App.Database.Insert(oneTime);
 
-                                if (App.SyncMail != "" && Connectivity.NetworkAccess == NetworkAccess.Internet)
-                                    await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("OneTimeTask").PostAsync(oneTime);
-                                else
-                                    App.AddHistoryDb.Insert(oneTime);
-
-                                OneTimeTasks.Add(arg.Task);
+                                OneTimeTasks.Add(new TaskModel { No = oneTime.No, Content = oneTime.Content, IconPath = oneTime.IconPath, Status = oneTime.Status });
 
                                 if (OTTCompleteListButton.Text == "미완료 보기") OTTCompleteListButton.Text = "완료 보기";
                                 break;
@@ -858,6 +1012,8 @@ namespace Genshin_Impact_Tasks.Pages
                 };
 
                 await PopupNavigation.Instance.PushAsync(popup);
+
+                AddTaskButton.IsEnabled = true;
             }
             catch (Exception ex)
             {
@@ -884,6 +1040,44 @@ namespace Genshin_Impact_Tasks.Pages
                     TaskEmptyText.Text = "할 일이 없습니다.";
                 }
                 TaskListRefresh();
+            }
+            catch (Exception ex)
+            {
+                App.DisplayEx(ex);
+            }
+        }
+        #endregion
+
+        #region 할 일 새로고침 시
+        private void TasksView_Refreshing(object sender, EventArgs e)
+        {
+            try
+            {
+                if (AutoSync && Connectivity.NetworkAccess == NetworkAccess.Internet)
+                    OnAutoSync();
+                else if (!AutoSync)
+                    TaskListRefresh();
+            }
+            catch (Exception ex)
+            {
+                App.DisplayEx(ex);
+            }
+        }
+        #endregion
+
+        #region 할 일 새로고침 버튼 클릭 시
+        private void RefreshTasksViewButton_Clicked(object sender, EventArgs e)
+        {
+            try
+            {
+                RefreshTasksViewButton.IsEnabled = false;
+
+                if (AutoSync && Connectivity.NetworkAccess == NetworkAccess.Internet)
+                    OnAutoSync();
+                else if (!AutoSync)
+                    TaskListRefresh();
+
+                Device.StartTimer(TimeSpan.FromSeconds(1), () => { RefreshTasksViewButton.IsEnabled = true; return false; });
             }
             catch (Exception ex)
             {

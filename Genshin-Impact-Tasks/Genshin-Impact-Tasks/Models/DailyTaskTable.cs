@@ -5,7 +5,7 @@ namespace Genshin_Impact_Tasks.Models
     [Table("DailyTask")]
     public class DailyTaskTable
     {
-        [PrimaryKey, AutoIncrement, Column("No")]
+        [PrimaryKey, Column("No")]
         public int No { get; set; } // 고유 번호
 
         [Column("Content")]

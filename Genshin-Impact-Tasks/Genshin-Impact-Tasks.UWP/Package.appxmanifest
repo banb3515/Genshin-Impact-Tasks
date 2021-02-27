@@ -8,7 +8,7 @@
 
   <Identity
     Name="6ba9fb2b-23e8-4305-81e4-eea3ea771187"
-    Publisher="CN=63ead4ab-ed81-41b8-9295-4d99e5eaf4cb"
+    Publisher="CN=BanB"
     Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="ec0cc741-fd3e-485c-81be-68815c480690" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
@@ -34,8 +34,8 @@
       <uap:VisualElements
         DisplayName="원신 태스크"
         Square150x150Logo="Assets\Square150x150Logo.png"
-        Square44x44Logo="Assets\Square44x44Logo.png"
-        Description="Genshin Impact Tasks, Dev Version"
+        Square44x44Logo="Assets\App Logo.png"
+        Description="게임 원신의 할 일을 메모해두거나 다양한 기능을 사용할 수 있습니다."
         BackgroundColor="transparent">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" Square310x310Logo="Assets\LargeTile.png" Square71x71Logo="Assets\SmallTile.png">
           <uap:ShowNameOnTiles>

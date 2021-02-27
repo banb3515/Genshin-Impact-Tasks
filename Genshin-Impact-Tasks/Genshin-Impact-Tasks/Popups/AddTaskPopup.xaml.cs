@@ -4,7 +4,6 @@ using Rg.Plugins.Popup.Pages;
 using Rg.Plugins.Popup.Services;
 
 using System;
-using System.Linq;
 
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
@@ -76,6 +75,8 @@ namespace Genshin_Impact_Tasks.Popups
         {
             try
             {
+                IconPreview.IsEnabled = false;
+
                 var popup = new SelectIconPopup();
 
                 popup.OnClosed += (s, arg) =>
@@ -89,6 +90,8 @@ namespace Genshin_Impact_Tasks.Popups
                 };
 
                 await PopupNavigation.Instance.PushAsync(popup);
+
+                IconPreview.IsEnabled = true;
             }
             catch (Exception ex)
             {

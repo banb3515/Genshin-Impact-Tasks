@@ -72,7 +72,6 @@ namespace Genshin_Impact_Tasks.UWP
                 Rg.Plugins.Popup.Popup.Init();
 
                 List<Assembly> assembliesToInclude = (List<Assembly>)Rg.Plugins.Popup.Popup.GetExtraAssemblies();
-
                 assembliesToInclude.Add(typeof(SfTreeViewRenderer).GetTypeInfo().Assembly);
 
                 Xamarin.Forms.Forms.Init(e, assembliesToInclude);

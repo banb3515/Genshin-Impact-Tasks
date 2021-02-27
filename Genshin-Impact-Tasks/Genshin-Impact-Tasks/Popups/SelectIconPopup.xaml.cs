@@ -159,6 +159,21 @@ namespace Genshin_Impact_Tasks.Popups
                 };
                 #endregion
 
+                #region 기원
+                var wishNode = new IconPickerModel
+                {
+                    Title = "기원",
+                    IconPath = "Resources/wish_primogem.png",
+                    SubIcons = new ObservableCollection<IconPickerModel>
+                    {
+                        new IconPickerModel { Title = "원석", IconPath = "Resources/wish_primogem.png", Sub = true },
+                        new IconPickerModel { Title = "뒤얽힌 인연", IconPath = "Resources/wish_intertwined_fate.png", Sub = true },
+                        new IconPickerModel { Title = "만남의 인연", IconPath = "Resources/wish_acquaint_fate.png", Sub = true },
+                        new IconPickerModel { Title = "공월 축복", IconPath = "Resources/wish_blessing_of_the_welkin_moon.png", Sub = true }
+                    }
+                };
+                #endregion
+
                 #region 기타
                 var otherNode = new IconPickerModel
                 {
@@ -182,6 +197,7 @@ namespace Genshin_Impact_Tasks.Popups
                 node.Add(waypointNode);
                 node.Add(enhancementNode);
                 node.Add(itemNode);
+                node.Add(wishNode);
                 node.Add(otherNode);
 
                 IconNode = node;
