@@ -13,7 +13,7 @@
 > ### **지원 플랫폼**
 >
 > -   Android
->     -   권장 버전: Android 9.0 (Pie)
+>     -   권장 버전: Android 10.0 (Q)
 >     -   최소 버전: Android 7.1 (Nougat)
 > -   Windows
 >     -   권장 버전: Windows 10, version 1903 (10.0, 빌드 18362)

@@ -112,6 +112,27 @@ namespace Genshin_Impact_Tasks.Popups
             }
         }
 
+        #region 모든 기능 활성화
+        private void EnableAll(bool flag = true)
+        {
+            try
+            {
+                SyncSwitch.IsEnabled = flag;
+                ThemePicker.IsEnabled = flag;
+                VibrationSwitch.IsEnabled = flag;
+                TADDayPicker.IsEnabled = flag;
+                BugButton.IsEnabled = flag;
+                FeedbackButton.IsEnabled = flag;
+                LicenseButton.IsEnabled = flag;
+                GitHubButton.IsEnabled = flag;
+            }
+            catch (Exception ex)
+            {
+                App.DisplayEx(ex);
+            }
+        }
+        #endregion
+
         #region 닫기 버튼 클릭 시
         private async void CloseButton_Clicked(object sender, EventArgs e)
         {
@@ -150,6 +171,8 @@ namespace Genshin_Impact_Tasks.Popups
                         return;
                     }
 
+                    EnableAll(false);
+
                     var answer = await App.Current.MainPage.DisplayAlert("동기화",
                         "# 동기화 활성화 시 주의 사항 #\n" +
                         "1. 데이터가 사용될 수 있습니다.\n" +
@@ -158,7 +181,11 @@ namespace Genshin_Impact_Tasks.Popups
                         "4. 동기화 해제 시 서버에 있는 데이터를 가져올 수 없습니다.\n" +
                         " - 다시 동기화 시 기존의 데이터를 가져올 수 있습니다.", "확인", "취소");
 
-                    if (!answer) return;
+                    if (!answer)
+                    {
+                        EnableAll();
+                        return;
+                    }
 
                     var email = "";
 
@@ -167,7 +194,11 @@ namespace Genshin_Impact_Tasks.Popups
                         email = "";
                         email = await App.Current.MainPage.DisplayPromptAsync("동기화", "동기화할 이메일을 입력해주세요.", "확인", "취소", keyboard: Keyboard.Email);
 
-                        if (email == null) return;
+                        if (email == null)
+                        {
+                            EnableAll();
+                            return;
+                        }
 
                         if (email.Trim() == "")
                         {
@@ -194,6 +225,7 @@ namespace Genshin_Impact_Tasks.Popups
 
                     if (Connectivity.NetworkAccess != NetworkAccess.Internet)
                     {
+                        EnableAll();
                         await App.Current.MainPage.DisplayAlert("동기화", "인터넷에 연결되어 있지 않아 동기화를 할 수 없습니다.\n인터넷 연결 상태를 확인해주시기 바랍니다.", "확인");
                         return;
                     }
@@ -211,11 +243,16 @@ namespace Genshin_Impact_Tasks.Popups
                             $"<{email}> (으)로 인증 번호가 전송되었습니다.\n인증 번호 8자리를 입력해주세요. (인증 번호 유효 시간 10분)\n(인증 번호가 안왔을 경우 스팸함을 확인해주세요.)",
                             "확인", "취소", maxLength: 8, keyboard: Keyboard.Numeric);
 
-                        if (auth == null) return;
+                        if (auth == null)
+                        {
+                            EnableAll();
+                            return;
+                        }
 
                         // 인증 번호 유효 시간 체크
                         if (DateTime.Compare(DateTime.Now, timeout.AddMinutes(10)) > 0)
                         {
+                            EnableAll();
                             await App.Current.MainPage.DisplayAlert("동기화", "인증 번호가 만료되었습니다.\n다시 시도해주시기 바랍니다.", "확인");
                             return;
                         }
@@ -237,6 +274,7 @@ namespace Genshin_Impact_Tasks.Popups
 
                     if (Connectivity.NetworkAccess != NetworkAccess.Internet)
                     {
+                        EnableAll();
                         await App.Current.MainPage.DisplayAlert("동기화", "인터넷에 연결되어 있지 않아 동기화를 할 수 없습니다.\n인터넷 연결 상태를 확인해주시기 바랍니다.", "확인");
                         return;
                     }
@@ -341,6 +379,8 @@ namespace Genshin_Impact_Tasks.Popups
                         return;
                     }
 
+                    EnableAll(false);
+
                     SyncMailText.IsVisible = false;
                     SyncMailText.Text = "";
 
@@ -377,6 +417,8 @@ namespace Genshin_Impact_Tasks.Popups
             try
             {
                 if (ClassId == "0") return;
+
+                EnableAll(false);
 
                 var themeDb = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "Theme").FirstOrDefault();
                 themeDb.Value = Themes[ThemePicker.Items[ThemePicker.SelectedIndex]];

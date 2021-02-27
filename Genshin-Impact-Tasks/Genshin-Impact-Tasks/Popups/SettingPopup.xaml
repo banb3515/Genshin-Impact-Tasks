@@ -90,8 +90,8 @@
                                 <ColumnDefinition />
                             </Grid.ColumnDefinitions>
 
-                            <Button Grid.Column="0" Text="버그 제보" ClassId="Bug" HeightRequest="40" CornerRadius="5" ContentLayout="Left" Image="Resources/bug.png" BorderColor="Black" BorderWidth="1" Clicked="BugFeedbackButton_Clicked" />
-                            <Button Grid.Column="1" Text="건의 사항" ClassId="Feedback" HeightRequest="40" CornerRadius="5" ContentLayout="Left" Image="Resources/feedback.png" BorderColor="Black" BorderWidth="1" Clicked="BugFeedbackButton_Clicked" />
+                            <Button x:Name="BugButton" Grid.Column="0" Text="버그 제보" ClassId="Bug" HeightRequest="40" CornerRadius="5" ContentLayout="Left" Image="Resources/bug.png" BorderColor="Black" BorderWidth="1" Clicked="BugFeedbackButton_Clicked" />
+                            <Button x:Name="FeedbackButton" Grid.Column="1" Text="건의 사항" ClassId="Feedback" HeightRequest="40" CornerRadius="5" ContentLayout="Left" Image="Resources/feedback.png" BorderColor="Black" BorderWidth="1" Clicked="BugFeedbackButton_Clicked" />
                         </Grid>
                         <!-- #endregion -->
                         
@@ -102,8 +102,8 @@
                                 <ColumnDefinition />
                             </Grid.ColumnDefinitions>
 
-                            <Button Grid.Column="0" Text="라이선스" HeightRequest="40" CornerRadius="5" ContentLayout="Left" Image="Resources/license.png" BorderColor="Black" BorderWidth="1" Clicked="ViewLicenseButton_Clicked" />
-                            <Button Grid.Column="1" Text="GitHub" HeightRequest="40" CornerRadius="5" ContentLayout="Left" Image="Resources/github.png" BorderColor="Black" BorderWidth="1" Clicked="MoveGitHubButton_Clicked" />
+                            <Button x:Name="LicenseButton" Grid.Column="0" Text="라이선스" HeightRequest="40" CornerRadius="5" ContentLayout="Left" Image="Resources/license.png" BorderColor="Black" BorderWidth="1" Clicked="ViewLicenseButton_Clicked" />
+                            <Button x:Name="GitHubButton" Grid.Column="1" Text="GitHub" HeightRequest="40" CornerRadius="5" ContentLayout="Left" Image="Resources/github.png" BorderColor="Black" BorderWidth="1" Clicked="MoveGitHubButton_Clicked" />
                         </Grid>
                         <!-- #endregion -->
 
