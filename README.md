@@ -33,7 +33,7 @@
 > ### **시연 영상**
 >
 > -   Android - [YouTube](https://www.youtube.com/watch?v=jA1e0Q4-Ifs)
-> -   Windows - [YoUTube](https://www.youtube.com/watch?v=9BO8qXJdLRQ)
+> -   Windows - [YoTube](https://www.youtube.com/watch?v=9BO8qXJdLRQ)
 
 ---
 
