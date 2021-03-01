@@ -4,7 +4,7 @@
 >
 > 0. [지원 플랫폼](#지원-플랫폼)
 > 1. [Genshin Impact Tasks란?](#Genshin-Impact-Tasks란)
-> 2. [스크린샷](#스크린샷)
+> 2. [시연 영상](#시연-영상)
 > 3. [개발 정보](#개발-정보)
 > 4. [다운로드](#다운로드)
 
@@ -30,9 +30,10 @@
 
 ---
 
-> ### **스크린샷**
+> ### **시연 영상**
 >
-> 개발 중
+> -   Android - [YouTube](https://www.youtube.com/watch?v=jA1e0Q4-Ifs)
+> -   Windows - [YouTube](https://www.youtube.com/watch?v=9BO8qXJdLRQ)
 
 ---
 
@@ -47,4 +48,5 @@
 
 > ### **다운로드**
 >
-> 개발 중
+> -   Android - [Google Play](https://play.google.com/store/apps/details?id=com.banb.genshin_impact_tasks)
+> -   Windows (출시 준비 중)
