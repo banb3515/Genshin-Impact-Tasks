@@ -1,4 +1,4 @@
-# **Genshin Impact Tasks**
+# **원신 태스크(Genshin Impact Tasks)**
 
 > ## **목차**
 >
