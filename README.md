@@ -42,7 +42,11 @@
 > -   언어 - [C#](https://docs.microsoft.com/ko-kr/dotnet/csharp/)
 > -   앱 프레임워크 - [자마린(Xamarin)](https://docs.microsoft.com/ko-kr/xamarin/get-started/what-is-xamarin)
 > -   사용된 외부 패키지
->     -   없음
+>     -   [Rg.Plugins.Popup](https://github.com/rotorgames/Rg.Plugins.Popup)
+>     -   [sqlite-net-pcl](https://github.com/praeclarum/sqlite-net)
+>     -   [Syncfusion.Xamarin.SfTreeView](https://help.syncfusion.com/xamarin/treeview/overview)
+>     -   [Xamarin.Essentials](https://github.com/xamarin/Essentials)
+>     -   [FirebaseDatabase.net](https://github.com/step-up-labs/firebase-database-dotnet)
 
 ---
 
