@@ -53,4 +53,4 @@
 > ### **다운로드**
 >
 > -   Android - [Google Play](https://play.google.com/store/apps/details?id=com.banb.genshin_impact_tasks)
-> -   Windows (출시 준비 중)
+> -   Windows - [Microsoft Store](https://www.microsoft.com/ko-kr/p/%EC%9B%90%EC%8B%A0-%ED%83%9C%EC%8A%A4%ED%81%AC-%EC%9B%90%EC%8B%A0-%EC%9D%BC%EC%9D%BC-%EC%A3%BC%EA%B0%84-%ED%95%A0-%EC%9D%BC-%EB%A9%94%EB%AA%A8/9nzpplzwq8sr?activetab=pivot:overviewtab)
