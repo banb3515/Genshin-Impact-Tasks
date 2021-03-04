@@ -20,10 +20,15 @@ namespace Genshin_Impact_Tasks
 {
     public partial class App : Application
     {
-        public static string Version { get; } = "1.2 Release"; // 앱 버전
+        public static string Version { get; } = "1.3 Release"; // 앱 버전
         public static string SyncMail { get; set; } // 동기화 이메일
+        public static bool AutoSync { get; set; } = false;
         public static bool UseDarkMode { get; set; } // 다크 모드 사용 여부
         public static bool UseVibration { get; set; } // 진동 사용 여부
+        public static bool UseStartupTask { get; set; } // 자동 시작 사용 여부
+        public static bool UseNotification { get; set; } // 알림 사용 여부
+
+        public static List<int> Notifications { get; set; } // 알림 예약된 ID
 
         public static ObservableCollection<IconPickerModel> IconNode { get; set; } // 아이콘 선택 팝업 노드
 
@@ -47,16 +52,22 @@ namespace Genshin_Impact_Tasks
         {
             InitializeComponent();
 
+            Notifications = new List<int>();
+
             Connectivity.ConnectivityChanged += Connectivity_ConnectivityChanged;
 
             #region Database
             Database = new SQLiteConnection(DbFilePath, OpenFlags);
 
-            // 테이블이 존재하지 않을 시 테이블 생성
+            #region 테이블 생성
             Database.CreateTable<SettingTable>();
             Database.CreateTable<DailyTaskTable>();
             Database.CreateTable<WeeklyTaskTable>();
             Database.CreateTable<OneTimeTaskTable>();
+
+            Database.CreateTable<MineralFarmingTable>();
+            Database.CreateTable<CollectionFarmingTable>();
+            #endregion
 
             #region 기본 데이터 삽입
             #region 설정 (Setting)
@@ -80,7 +91,7 @@ namespace Genshin_Impact_Tasks
                 var defaultTaskDb = new SettingTable { Key = "DefaultWeeklyTask", Value = "False" };
                 Database.Insert(defaultTaskDb);
             }
-            #endregion
+            #endregion           
 
             #region 동기화 이메일
             if (Database.Table<SettingTable>().ToList().Where(s => s.Key == "SyncMail").Count() == 0)
@@ -90,10 +101,10 @@ namespace Genshin_Impact_Tasks
             }
             #endregion
 
-            #region 동기화 시간
-            if (SyncMail != "" && Database.Table<SettingTable>().ToList().Where(s => s.Key == "SyncDate").Count() == 0)
+            #region 할 일 동기화 시간
+            if (SyncMail != "" && Database.Table<SettingTable>().ToList().Where(s => s.Key == "TasksSyncDate").Count() == 0)
             {
-                var syncDateDb = new SettingTable { Key = "SyncDate", Value = "" };
+                var syncDateDb = new SettingTable { Key = "TasksSyncDate", Value = "" };
                 Database.Insert(syncDateDb);
             }
             #endregion
@@ -111,6 +122,22 @@ namespace Genshin_Impact_Tasks
             {
                 var themeDb = new SettingTable { Key = "Theme", Value = "System" };
                 Database.Insert(themeDb);
+            }
+            #endregion
+
+            #region 자동 시작
+            if (Device.RuntimePlatform == Device.UWP && Database.Table<SettingTable>().ToList().Where(s => s.Key == "StartupTask").Count() == 0)
+            {
+                var stDb = new SettingTable { Key = "StartupTask", Value = "Off" };
+                Database.Insert(stDb);
+            }
+            #endregion
+
+            #region 알림
+            if (Database.Table<SettingTable>().ToList().Where(s => s.Key == "Notification").Count() == 0)
+            {
+                var notiDb = new SettingTable { Key = "Notification", Value = "Off" };
+                Database.Insert(notiDb);
             }
             #endregion
 
@@ -169,11 +196,60 @@ namespace Genshin_Impact_Tasks
                 Database.Update(dwtDb);
             }
             #endregion
+
+            #region 광물 파밍 (MineralFarming)
+            if (Database.Table<MineralFarmingTable>().ToList().Count() == 0)
+            {
+                var startId = 1000;
+                var dbList = new List<MineralFarmingTable>
+                {
+                    new MineralFarmingTable { Id = startId++, Name = "콜 라피스", IconPath = "Resources/mineral_cor_lapis.png", RespawnHour = 48, Status = false },
+                    new MineralFarmingTable { Id = startId++, Name = "야박석", IconPath = "Resources/mineral_noctilucous_jade.png", RespawnHour = 48, Status = false },
+                    new MineralFarmingTable { Id = startId++, Name = "수정덩이", IconPath = "Resources/mineral_crystal_chunk.png", RespawnHour = 72, Status = false },
+                    new MineralFarmingTable { Id = startId++, Name = "철광", IconPath = "Resources/mineral_iron_chunk.png", RespawnHour = 24, Status = false },
+                    new MineralFarmingTable { Id = startId++, Name = "백철", IconPath = "Resources/mineral_white_iron_chunk.png", RespawnHour = 48, Status = false },
+                    new MineralFarmingTable { Id = startId++, Name = "성은 광석", IconPath = "Resources/mineral_starsilver.png", RespawnHour = 48, Status = false },
+                    new MineralFarmingTable { Id = startId++, Name = "전기 수정", IconPath = "Resources/mineral_electro_crystal.png", RespawnHour = 48, Status = false }
+                };
+
+                foreach (var db in dbList)
+                    Database.Insert(db);
+            }
+            #endregion
+
+            #region 채집물 파밍 (CollectionFarming)
+            if (Database.Table<CollectionFarmingTable>().ToList().Count() == 0)
+            {
+                var startId = 2000;
+                var dbList = new List<CollectionFarmingTable>
+                {
+                    new CollectionFarmingTable { Id = startId++, Name = "청심", IconPath = "Resources/collection_qingxin.png", RespawnHour = 48, Status = false },
+                    new CollectionFarmingTable { Id = startId++, Name = "예상꽃", IconPath = "Resources/collection_silk_flower.png", RespawnHour = 48, Status = false },
+                    new CollectionFarmingTable { Id = startId++, Name = "바람버섯", IconPath = "Resources/collection_philanemo_mushroom.png", RespawnHour = 48, Status = false },
+                    new CollectionFarmingTable { Id = startId++, Name = "세실리아꽃", IconPath = "Resources/collection_cecilia.png", RespawnHour = 48, Status = false },
+                    new CollectionFarmingTable { Id = startId++, Name = "낙락베리", IconPath = "Resources/collection_valberry.png", RespawnHour = 48, Status = false },
+                    new CollectionFarmingTable { Id = startId++, Name = "풍차국화", IconPath = "Resources/collection_windwheel_aster.png", RespawnHour = 48, Status = false },
+                    new CollectionFarmingTable { Id = startId++, Name = "통통연꽃", IconPath = "Resources/collection_calla_lily.png", RespawnHour = 48, Status = false },
+                    new CollectionFarmingTable { Id = startId++, Name = "유리백합", IconPath = "Resources/collection_glaze_lily.png", RespawnHour = 48, Status = false },
+                    new CollectionFarmingTable { Id = startId++, Name = "절운고추", IconPath = "Resources/collection_jueyun_chili.png", RespawnHour = 48, Status = false },
+                    new CollectionFarmingTable { Id = startId++, Name = "유리주머니", IconPath = "Resources/collection_violetgrass.png", RespawnHour = 48, Status = false },
+                    new CollectionFarmingTable { Id = startId++, Name = "고리고리 열매", IconPath = "Resources/collection_wolfhook.png", RespawnHour = 48, Status = false },
+                    new CollectionFarmingTable { Id = startId++, Name = "등불꽃", IconPath = "Resources/collection_small_lamp_grass.png", RespawnHour = 48, Status = false },
+                    new CollectionFarmingTable { Id = startId++, Name = "민들레 씨앗", IconPath = "Resources/collection_dandelion_seed.png", RespawnHour = 48, Status = false }
+                };
+
+                foreach (var db in dbList)
+                    Database.Insert(db);
+            }
+            #endregion
             #endregion
 
             #region 변수 초기화
             #region 동기화 이메일
             SyncMail = Database.Table<SettingTable>().ToList().Where(s => s.Key == "SyncMail").FirstOrDefault().Value;
+
+            if (SyncMail != "")
+                AutoSync = true;
             #endregion
 
             #region Firebase
@@ -198,6 +274,19 @@ namespace Genshin_Impact_Tasks
                     UseDarkMode = true;
                     break;
             }
+            #endregion
+
+            #region 설정 - 자동 시작
+            if (Device.RuntimePlatform == Device.UWP)
+            {
+                if (Database.Table<SettingTable>().ToList().Where(s => s.Key == "StartupTask").FirstOrDefault().Value == "On") UseStartupTask = true;
+                else UseStartupTask = false;
+            }
+            #endregion
+
+            #region 설정 - 알림
+            if (Database.Table<SettingTable>().ToList().Where(s => s.Key == "Notification").FirstOrDefault().Value == "On") UseNotification = true;
+            else UseNotification = false;
             #endregion
 
             #region 설정 - 진동
@@ -283,13 +372,13 @@ namespace Genshin_Impact_Tasks
         }
         #endregion
         
-        #region 로컬 동기화 날짜 업데이트
-        public static async void UpdateLocalSyncDate()
+        #region 로컬 할 일 동기화 날짜 업데이트
+        public static async void UpdateLocalTasksSyncDate()
         {
             try
             {
-                var server = (await Firebase.Child("UserData").Child(SyncMail.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).Where(item => item.Object.Key == "SyncDate").FirstOrDefault();
-                var local = Database.Table<SettingTable>().ToList().Where(s => s.Key == "SyncDate").FirstOrDefault();
+                var server = (await Firebase.Child("UserData").Child(SyncMail.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).Where(item => item.Object.Key == "TasksSyncDate").FirstOrDefault();
+                var local = Database.Table<SettingTable>().ToList().Where(s => s.Key == "TasksSyncDate").FirstOrDefault();
                 local.Value = server.Object.Value;
                 Database.Update(local);
             }
@@ -300,18 +389,18 @@ namespace Genshin_Impact_Tasks
         }
         #endregion
 
-        #region 서버 동기화 날짜 업데이트
-        public static async void UpdateServerSyncDate()
+        #region 서버 할 일 동기화 날짜 업데이트
+        public static async void UpdateServerTasksSyncDate()
         {
             try
             {
                 var date = DateTime.Now.ToString();
 
-                var local = Database.Table<SettingTable>().ToList().Where(s => s.Key == "SyncDate").FirstOrDefault();
+                var local = Database.Table<SettingTable>().ToList().Where(s => s.Key == "TasksSyncDate").FirstOrDefault();
                 local.Value = date;
                 Database.Update(local);
 
-                var server = (await Firebase.Child("UserData").Child(SyncMail.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).Where(item => item.Object.Key == "SyncDate").FirstOrDefault();
+                var server = (await Firebase.Child("UserData").Child(SyncMail.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).Where(item => item.Object.Key == "TasksSyncDate").FirstOrDefault();
                 server.Object.Value = date;
                 await Firebase.Child("UserData").Child(SyncMail.Replace('.', '_')).Child("Setting").Child(server.Key).PutAsync(server.Object);
             }
@@ -846,7 +935,9 @@ namespace Genshin_Impact_Tasks
             try
             {
                 if (SyncMail != "")
-                    TaskTabView.AutoSync = false;
+                    AutoSync = false;
+                TaskTabView.TimerRepeat = false;
+                FarmingTabView.TimerRepeat = false;
             }
             catch (Exception ex)
             {
@@ -861,7 +952,9 @@ namespace Genshin_Impact_Tasks
             try
             {
                 if (SyncMail != "")
-                    TaskTabView.AutoSync = true;
+                    AutoSync = true;
+                TaskTabView.TimerRepeat = true;
+                FarmingTabView.TimerRepeat = true;
             }
             catch (Exception ex)
             {

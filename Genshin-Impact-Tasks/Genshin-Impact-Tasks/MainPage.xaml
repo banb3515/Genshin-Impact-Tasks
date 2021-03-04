@@ -2,10 +2,11 @@
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:pages="clr-namespace:Genshin_Impact_Tasks.Pages"
+             xmlns:sf="clr-namespace:Syncfusion.XForms.TabView;assembly=Syncfusion.SfTabView.XForms"
              x:Class="Genshin_Impact_Tasks.MainPage"
              ClassId="0">
     <ContentPage.Content>
-        <Grid x:Name="Test">
+        <Grid x:Name="MainGrid">
             <Grid.RowDefinitions>
                 <RowDefinition Height="120" />
                 <RowDefinition Height="40" />
@@ -51,24 +52,29 @@
                 
                 <!-- Task Tab -->
                 <Button x:Name="TaskTabBtn" Text="할 일" Grid.Column="0" CornerRadius="5" ContentLayout="Left" Image="Resources/task.png" BindingContext="Task" Clicked="NavigateTab_Clicked" BorderColor="Black" BorderWidth="1" />
+                <!-- Farming Tab -->
+                <Button x:Name="FarmingTabBtn" Text="파밍" Grid.Column="1" CornerRadius="5" ContentLayout="Left" Image="Resources/tab_farming.png" BindingContext="Farming" Clicked="NavigateTab_Clicked" BorderColor="Black" BorderWidth="1" />
                 <!-- Domains Tab -->
-                <Button x:Name="DomainsTabBtn" Text="비경" Grid.Column="1" CornerRadius="5" ContentLayout="Left" Image="Resources/domains.png" BindingContext="Domains" Clicked="NavigateTab_Clicked" BorderColor="Black" BorderWidth="1" />
-                <!-- Timer Tab -->
-                <Button x:Name="TimerTabBtn" Text="타이머" Grid.Column="2" CornerRadius="5" ContentLayout="Left" Image="Resources/timer.png" BindingContext="Timer" Clicked="NavigateTab_Clicked" BorderColor="Black" BorderWidth="1" />
+                <Button x:Name="DomainsTabBtn" Text="비경" Grid.Column="2" CornerRadius="5" ContentLayout="Left" Image="Resources/domains.png" BindingContext="Domains" Clicked="NavigateTab_Clicked" BorderColor="Black" BorderWidth="1" />
             </Grid>
             <!-- #endregion -->
 
             <!-- #region Tabs -->
-            <Grid Grid.Row="3" Margin="5,0,5,10">
-                <!-- Task Tab -->
-                <pages:TaskTabView x:Name="TaskTab" />
+            <sf:SfTabView x:Name="TabView" Grid.Row="3" DisplayMode="NoHeader" EnableSwiping="False" ClassId="0" Margin="5,0">
+                <sf:SfTabItem>
+                    <sf:SfTabItem.Content>
+                        <!-- Task Tab -->
+                        <pages:TaskTabView x:Name="TaskTab" />
+                    </sf:SfTabItem.Content>
+                </sf:SfTabItem>
 
-                <!-- Domains Tab -->
-                <pages:DomainsTabView x:Name="DomainsTab" IsVisible="False" />
-
-                <!-- Timer Tab -->
-                <pages:TimerTabView x:Name="TimerTab" IsVisible="False" />
-            </Grid>
+                <sf:SfTabItem>
+                    <sf:SfTabItem.Content>
+                        <!-- Farming Tab -->
+                        <pages:FarmingTabView x:Name="FarmingTab" />
+                    </sf:SfTabItem.Content>
+                </sf:SfTabItem>
+            </sf:SfTabView>
             <!-- #endregion -->
         </Grid>
     </ContentPage.Content>

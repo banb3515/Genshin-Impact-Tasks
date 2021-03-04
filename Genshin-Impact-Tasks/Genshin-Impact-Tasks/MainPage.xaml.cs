@@ -1,8 +1,10 @@
-﻿using Genshin_Impact_Tasks.Popups;
+﻿using Genshin_Impact_Tasks.Pages;
+using Genshin_Impact_Tasks.Popups;
 
 using Rg.Plugins.Popup.Services;
 
 using System;
+using System.Globalization;
 
 using Xamarin.Forms;
 
@@ -10,6 +12,8 @@ namespace Genshin_Impact_Tasks
 {
     public partial class MainPage : ContentPage
     {
+        private string CurrentTab { get; set; }
+
         public static bool TimerDow { get; set; }
 
         DayOfWeek CurrentDow { get; set; }
@@ -33,7 +37,11 @@ namespace Genshin_Impact_Tasks
         {
             try
             {
+                CurrentTab = "Task";
                 TimerDow = true;
+
+                if (Device.RuntimePlatform == Device.Android)
+                    TabView.Margin = new Thickness { Left = 5, Right = 5, Bottom = 15 };
 
                 if (App.UseDarkMode) BackgroundColor = Color.FromHex("242424");
                 else BackgroundColor = Color.White;
@@ -102,7 +110,7 @@ namespace Genshin_Impact_Tasks
                         await CurrentDateText.FadeTo(0, 150, Easing.SpringOut);
 
                         TopFrame.BackgroundColor = Color.FromHex(hexColor);
-                        CurrentDateText.Text = date.ToString("dddd");
+                        CurrentDateText.Text = date.ToString("dddd", new CultureInfo("ko-kr"));
 
                         _ = TopFrame.FadeTo(1, 1000, Easing.SpringIn);
                         await CurrentDateText.FadeTo(1, 1500, Easing.SpringIn);
@@ -111,7 +119,7 @@ namespace Genshin_Impact_Tasks
                     {
                         ClassId = "1";
                         TopFrame.BackgroundColor = Color.FromHex(hexColor);
-                        CurrentDateText.Text = date.ToString("dddd");
+                        CurrentDateText.Text = date.ToString("dddd", new CultureInfo("ko-kr"));
                     }
                 });
             }
@@ -145,8 +153,15 @@ namespace Genshin_Impact_Tasks
         #region 탭 목록 보기
         private async void ShowTabList()
         {
+            if (TabView.ClassId == "0")
+            {
+                if (Device.RuntimePlatform == Device.UWP)
+                    TabView.Margin = new Thickness { Left = 5, Right = 5, Bottom = -40 };
+                TabView.ClassId = "1";
+            }
+
             TabListDropdownBtn.Text = "▲";
-            Test.RowDefinitions[2].Height = 60;
+            MainGrid.RowDefinitions[2].Height = 60;
 
             TabListDropdownBtn.IsEnabled = false;
             TabBar.IsVisible = true;
@@ -154,37 +169,13 @@ namespace Genshin_Impact_Tasks
             await TabBar.TranslateTo(0, -50, 0);
             _ = TabBar.TranslateTo(0, 0, 250, Easing.CubicOut);
 
-            switch (CurrentTabTitle.Text)
-            {
-                case "할 일":
-                    await TaskTab.TranslateTo(0, -50, 0);
-                    await TaskTab.TranslateTo(0, 0, 250, Easing.CubicOut);
-                    break;
-                case "비경":
-                    await DomainsTab.TranslateTo(0, -50, 0);
-                    await DomainsTab.TranslateTo(0, 0, 250, Easing.CubicOut);
-                    break;
-                case "타이머":
-                    await TimerTab.TranslateTo(0, -50, 0);
-                    await TimerTab.TranslateTo(0, 0, 250, Easing.CubicOut);
-                    break;
-            }
+            await TabView.TranslateTo(0, -50, 0);
+            await TabView.TranslateTo(0, 0, 250, Easing.CubicOut);
 
             TabListDropdownBtn.IsEnabled = true;
             EnableTabButton();
 
-            switch (CurrentTabTitle.Text)
-            {
-                case "할 일":
-                    await TaskTab.TranslateTo(0, 0, 0);
-                    break;
-                case "비경":
-                    await DomainsTab.TranslateTo(0, 0, 0);
-                    break;
-                case "타이머":
-                    await TimerTab.TranslateTo(0, 0, 0);
-                    break;
-            }
+            await TabView.TranslateTo(0, 0, 0);
         }
         #endregion
 
@@ -196,37 +187,15 @@ namespace Genshin_Impact_Tasks
             EnableTabButton(false);
             _ = TabBar.TranslateTo(0, -50, 250, Easing.CubicIn);
 
-            switch (CurrentTabTitle.Text)
-            {
-                case "할 일":
-                    await TaskTab.TranslateTo(0, -50, 250, Easing.CubicIn);
-                    break;
-                case "비경":
-                    await DomainsTab.TranslateTo(0, -50, 250, Easing.CubicIn);
-                    break;
-                case "타이머":
-                    await TimerTab.TranslateTo(0, -50, 250, Easing.CubicIn);
-                    break;
-            }
+            await TabView.TranslateTo(0, -50, 250, Easing.CubicIn);
 
             TabBar.IsVisible = false;
             TabListDropdownBtn.IsEnabled = true;
             EnableTabButton();
 
-            switch (CurrentTabTitle.Text)
-            {
-                case "할 일":
-                    await TaskTab.TranslateTo(0, 0, 0);
-                    break;
-                case "비경":
-                    await DomainsTab.TranslateTo(0, 0, 0);
-                    break;
-                case "타이머":
-                    await TimerTab.TranslateTo(0, 0, 0);
-                    break;
-            }
+            await TabView.TranslateTo(0, 0, 0);
 
-            Test.RowDefinitions[2].Height = GridLength.Auto;
+            MainGrid.RowDefinitions[2].Height = GridLength.Auto;
         }
         #endregion
 
@@ -237,8 +206,8 @@ namespace Genshin_Impact_Tasks
             try
             {
                 TaskTabBtn.IsEnabled = enable;
+                FarmingTab.IsEnabled = enable;
                 DomainsTabBtn.IsEnabled = enable;
-                TimerTabBtn.IsEnabled = enable;
             }
             catch (Exception ex)
             {
@@ -254,6 +223,14 @@ namespace Genshin_Impact_Tasks
             {
                 var tab = (sender as Button).BindingContext as string;
 
+                if (tab == CurrentTab)
+                {
+                    HideTabList();
+                    return;
+                }
+
+                CurrentTab = tab;
+
                 // 상단 좌측, 현재 보고있는 탭 정보 변경
                 switch (tab)
                 {
@@ -261,9 +238,27 @@ namespace Genshin_Impact_Tasks
                         CurrentTabImage.Source = "Resources/task.png";
                         CurrentTabTitle.Text = "할 일";
 
-                        TaskTab.IsVisible = true;
-                        DomainsTab.IsVisible = false;
-                        TimerTab.IsVisible = false;
+                        TabView.SelectedIndex = 0;
+
+                        TaskTab.IsEnabled = true;
+                        FarmingTab.IsEnabled = false;
+                        //DomainsTab.IsEnabled = false;
+
+                        TaskTabView.TimerRepeat = true;
+                        FarmingTabView.TimerRepeat = false;
+                        break;
+                    case "Farming":
+                        CurrentTabImage.Source = "Resources/tab_farming.png";
+                        CurrentTabTitle.Text = "파밍";
+
+                        TabView.SelectedIndex = 1;
+
+                        FarmingTab.IsEnabled = true;
+                        TaskTab.IsEnabled = false;
+                        //DomainsTab.IsEnabled = false;
+
+                        TaskTabView.TimerRepeat = false;
+                        FarmingTabView.TimerRepeat = true;
                         break;
                     case "Domains":
                         await DisplayAlert("비경", "개발 중 입니다.", "확인");
@@ -272,21 +267,14 @@ namespace Genshin_Impact_Tasks
                         CurrentTabImage.Source = "Resources/domains.png";
                         CurrentTabTitle.Text = "비경";
 
-                        TaskTab.IsVisible = false;
-                        DomainsTab.IsVisible = true;
-                        TimerTab.IsVisible = false;
-                        */
-                        break;
-                    case "Timer":
-                        await DisplayAlert("타이머", "개발 중 입니다.", "확인");
+                        TabView.SelectedIndex = 2;
 
-                        /*
-                        CurrentTabImage.Source = "Resources/timer.png";
-                        CurrentTabTitle.Text = "타이머";
+                        DomainsTab.IsEnabled = true;
+                        TaskTab.IsEnabled = false;
+                        FarmingTab.IsEnabled = false;
 
-                        TaskTab.IsVisible = false;
-                        DomainsTab.IsVisible = false;
-                        TimerTab.IsVisible = true;
+                        TaskTabView.TimerRepeat = false;
+                        FarmingTabView.TimerRepeat = false;
                         */
                         break;
                 }

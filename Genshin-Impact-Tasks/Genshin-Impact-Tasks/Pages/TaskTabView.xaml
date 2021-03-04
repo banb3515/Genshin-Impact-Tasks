@@ -39,7 +39,7 @@
 
                 <!-- #region Tasks -->
                 <RefreshView Grid.Row="2" x:Name="TasksRefreshView" Refreshing="TasksView_Refreshing">
-                    <ListView x:Name="TasksView" ItemsSource="{Binding TaskModel}" SelectionMode="None" ItemTapped="TasksView_ItemTapped" HasUnevenRows="True" SeparatorVisibility="None">
+                    <ListView x:Name="TasksView" SelectionMode="None" ItemTapped="TasksView_ItemTapped" HasUnevenRows="True" SeparatorVisibility="None">
                         <ListView.Header>
                             <Label x:Name="TaskEmptyText" Text="할 일이 없습니다." FontSize="Medium" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" HorizontalOptions="Center">
                                 <Label.Triggers>

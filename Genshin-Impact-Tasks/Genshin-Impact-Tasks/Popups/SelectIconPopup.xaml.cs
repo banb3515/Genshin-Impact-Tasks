@@ -4,7 +4,6 @@ using Rg.Plugins.Popup.Pages;
 using Rg.Plugins.Popup.Services;
 
 using System;
-using System.Collections.ObjectModel;
 
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
@@ -44,7 +43,7 @@ namespace Genshin_Impact_Tasks.Popups
                 if (item.Sub)
                 {
                     OnClosed?.Invoke(this, new SelectIconResult { IconPath = item.IconPath });
-                    await PopupNavigation.Instance.PopAsync();
+                    await PopupNavigation.Instance.RemovePageAsync(this);
                 }
             }
             catch (Exception ex)
@@ -60,7 +59,7 @@ namespace Genshin_Impact_Tasks.Popups
             try
             {
                 OnClosed?.Invoke(this, new SelectIconResult { IconPath = null });
-                await PopupNavigation.Instance.PopAsync();
+                await PopupNavigation.Instance.RemovePageAsync(this);
             }
             catch (Exception ex)
             {

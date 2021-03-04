@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ContentView xmlns="http://xamarin.com/schemas/2014/forms" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:Genshin_Impact_Tasks.Converter"
+             x:Class="Genshin_Impact_Tasks.Pages.FarmingTabView">
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <helpers:CompleteColorConverter x:Key="CompleteColorConverter" />
+            <helpers:UseDarkModeConverter x:Key="UseDarkModeConverter" />
+        </ResourceDictionary>
+    </ContentView.Resources>
+    
+    <ContentView.Content>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="50" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="1" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Title -->
+                <Grid Grid.Row="0" Margin="5,0,5,5">
+                    <Label x:Name="Title" Text="광물" FontSize="Medium" FontAttributes="Bold" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" VerticalOptions="Center" HorizontalOptions="Center" />
+                </Grid>
+
+                <!-- Divider -->
+                <BoxView Grid.Row="1" x:Name="Divider" HeightRequest="1" Color="Black" Margin="5,0" />
+
+                <!-- #region Farming -->
+                <ListView x:Name="FarmingView" Grid.Row="2" SelectionMode="None" ItemTapped="FarmingView_ItemTapped" HasUnevenRows="True" SeparatorVisibility="None">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <ViewCell>
+                                <Grid Margin="5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Frame Grid.Column="0" Grid.ColumnSpan="2" BackgroundColor="{Binding Status, Converter={x:StaticResource CompleteColorConverter}}" Opacity="0.75" CornerRadius="20" HasShadow="True" Margin="0,2" />
+
+                                    <Image Grid.Column="0" Source="{Binding IconPath}" HorizontalOptions="Center" VerticalOptions="Center" WidthRequest="75" HeightRequest="75" />
+
+                                    <Grid Grid.Column="1" VerticalOptions="Center">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <Label Grid.Row="0" Text="{Binding Name}" TextColor="Black" FontSize="Small" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" Margin="0,15,0,5" />
+                                        <Label Grid.Row="1" Text="- 리젠 완료 시간 -" TextColor="Black" FontSize="Micro" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" Margin="0,0,0,-8" />
+                                        <Label Grid.Row="2" Text="{Binding RespawnTime, TargetNullValue='- - -'}" TextColor="Black" FontSize="Micro" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" Margin="0,0,0,10" />
+                                    </Grid>
+                                </Grid>
+                            </ViewCell>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <!-- #endregion -->
+            </Grid>
+
+            <Grid Grid.Row="1" Margin="5,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <Button x:Name="MineralButton" Grid.Column="0" Text="광물" Image="Resources/tab_farming.png" ContentLayout="Left" CornerRadius="5" BorderColor="Black" BorderWidth="1" BindingContext="Mineral" Clicked="NavigateFarmingList_Clicked" />
+                <Button x:Name="CollectionButton" Grid.Column="1" Text="채집물" Image="Resources/tab_philanemo_mushroom.png" ContentLayout="Left" CornerRadius="5" BorderColor="Black" BorderWidth="1" BindingContext="Collection" Clicked="NavigateFarmingList_Clicked" />
+            </Grid>
+        </Grid>
+    </ContentView.Content>
+</ContentView>

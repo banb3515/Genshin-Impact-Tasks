@@ -46,7 +46,7 @@ namespace Genshin_Impact_Tasks.Popups
                 if (string.IsNullOrWhiteSpace(CurrentIconPath)) CurrentIconPath = "Resources/task.png";
 
                 OnClosed?.Invoke(this, new AddTaskResult { Task = new TaskModel { IconPath = CurrentIconPath, Content = ContentEntry.Text.Trim(), Status = false } });
-                await PopupNavigation.Instance.PopAsync();
+                await PopupNavigation.Instance.RemovePageAsync(this);
             }
             catch (Exception ex)
             {
@@ -61,7 +61,7 @@ namespace Genshin_Impact_Tasks.Popups
             try
             {
                 OnClosed?.Invoke(this, new AddTaskResult { Task = null });
-                await PopupNavigation.Instance.PopAsync();
+                await PopupNavigation.Instance.RemovePageAsync(this);
             }
             catch (Exception ex)
             {

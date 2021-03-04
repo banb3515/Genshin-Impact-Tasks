@@ -1,9 +1,9 @@
-﻿using Firebase.Database;
-using Firebase.Database.Query;
-
-using Genshin_Impact_Tasks.Models;
+﻿using Genshin_Impact_Tasks.Models;
 using Genshin_Impact_Tasks.Pages;
 using Genshin_Impact_Tasks.Utils;
+
+using Firebase.Database;
+using Firebase.Database.Query;
 
 using Rg.Plugins.Popup.Pages;
 using Rg.Plugins.Popup.Services;
@@ -18,6 +18,7 @@ using System.Threading.Tasks;
 using Xamarin.Essentials;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
+using Genshin_Impact_Tasks.Services;
 
 namespace Genshin_Impact_Tasks.Popups
 {
@@ -43,6 +44,7 @@ namespace Genshin_Impact_Tasks.Popups
                     MainFrame.BackgroundColor = Color.FromHex("333333");
                     
                     ThemeIcon.Source = "Resources/theme_white.png";
+                    NotificationIcon.Source = "Resources/notification_white.png";
                     VibrationIcon.Source = "Resources/vibration_white.png";
                     TADIcon.Source = "Resources/delete_white.png";
                     SyncIcon.Source = "Resources/sync_white.png";
@@ -55,6 +57,14 @@ namespace Genshin_Impact_Tasks.Popups
                     VibrationSetting.IsVisible = false;
                     ThemePicker.WidthRequest = 160;
                     TADDayPicker.WidthRequest = 140;
+
+                    #region 자동 시작 사용 초기화
+                    StartupTaskSwitch.IsToggled = App.UseStartupTask;
+                    #endregion
+                }
+                else if (Device.RuntimePlatform == Device.Android)
+                {
+                    StartupTaskSetting.IsVisible = false;
                 }
 
                 #region 동기화 설정 초기화
@@ -84,6 +94,10 @@ namespace Genshin_Impact_Tasks.Popups
                         ThemePicker.SelectedIndex = 2;
                         break;
                 }
+                #endregion
+
+                #region 알림 사용 초기화
+                NotificationSwitch.IsToggled = App.UseNotification;
                 #endregion
 
                 #region 진동 사용 초기화
@@ -117,8 +131,10 @@ namespace Genshin_Impact_Tasks.Popups
         {
             try
             {
+                CloseButton.IsEnabled = flag;
                 SyncSwitch.IsEnabled = flag;
                 ThemePicker.IsEnabled = flag;
+                NotificationSwitch.IsEnabled = flag;
                 VibrationSwitch.IsEnabled = flag;
                 TADDayPicker.IsEnabled = flag;
                 BugButton.IsEnabled = flag;
@@ -138,7 +154,7 @@ namespace Genshin_Impact_Tasks.Popups
         {
             try
             {
-                await PopupNavigation.Instance.PopAsync();
+                await PopupNavigation.Instance.RemovePageAsync(this);
             }
             catch (Exception ex)
             {
@@ -176,10 +192,13 @@ namespace Genshin_Impact_Tasks.Popups
                     var answer = await App.Current.MainPage.DisplayAlert("동기화",
                         "# 동기화 활성화 시 주의 사항 #\n" +
                         "1. 데이터가 사용될 수 있습니다.\n" +
-                        "2. 인터넷에 연결되어 있지 않으면 할 일 추가, 수정, 삭제, 일부 설정을 변경할 수 없습니다.\n" +
-                        "3. 모든 데이터는 서버에 저장됩니다.\n" +
-                        "4. 동기화 해제 시 서버에 있는 데이터를 가져올 수 없습니다.\n" +
-                        " - 다시 동기화 시 기존의 데이터를 가져올 수 있습니다.", "확인", "취소");
+                        "2. 모든 데이터는 서버에 저장됩니다.\n" +
+                        "3. 동기화 해제 시 서버에 있는 데이터를 가져올 수 없습니다.\n" +
+                        " - 다시 동기화 시 기존의 데이터를 가져올 수 있습니다.\n\n" +
+                        " ! 동기화 활성화 후 인터넷에 연결되어있지 않을 시 제한되는 기능\n" +
+                        " - 할 일 추가, 수정, 삭제\n" +
+                        " - 파밍 상태 변경\n" +
+                        " - 일부 설정 변경", "확인", "취소");
 
                     if (!answer)
                     {
@@ -279,6 +298,9 @@ namespace Genshin_Impact_Tasks.Popups
                         return;
                     }
 
+                    var loading = new LoadingPopup("동기화 중입니다.");
+                    await PopupNavigation.Instance.PushAsync(loading);
+
                     bool answer2 = false;
 
                     var options = new FirebaseOptions { AuthTokenAsyncFactory = () => Task.FromResult(App.FirebaseSecretKey) };
@@ -298,13 +320,14 @@ namespace Genshin_Impact_Tasks.Popups
                     catch (NullReferenceException) { }
 
                     TaskTabView.TimerRepeat = false;
+                    FarmingTabView.TimerRepeat = false;
 
                     #region 서버 기준
                     if (answer2)
                     {
                         App.Database.Table<SettingTable>().ToList().ForEach(s =>
                         {
-                            if (s.Key != "Theme" && s.Key != "Vibration" && s.Key != "SyncMail" && s.Key != "Version")
+                            if (s.Key != "Theme" && s.Key != "Vibration" && s.Key != "SyncMail" && s.Key != "Version" && s.Key != "Notification" && s.Key != "StartupTask")
                                 App.Database.Delete(s);
                         });
                         App.Database.DropTable<DailyTaskTable>();
@@ -317,7 +340,7 @@ namespace Genshin_Impact_Tasks.Popups
 
                         (await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).ToList().ForEach(item =>
                         {
-                            if (item.Object.Key != "Theme" && item.Object.Key != "Vibration" && item.Object.Key != "SyncMail" && item.Object.Key != "Version")
+                            if (item.Object.Key != "Theme" && item.Object.Key != "Vibration" && item.Object.Key != "SyncMail" && item.Object.Key != "Version" && item.Object.Key != "Notification" && item.Object.Key != "StartupTask")
                                 App.Database.Insert(item.Object);
                         });
                         (await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("DailyTask").OnceAsync<DailyTaskTable>()).ToList().ForEach(item => { App.Database.Insert(item.Object); });
@@ -335,13 +358,13 @@ namespace Genshin_Impact_Tasks.Popups
                         }
                         catch (NullReferenceException) { }
 
-                        // 동기화 시간 업데이트 - 로컬
-                        var syncDateDb = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "SyncDate").FirstOrDefault();
+                        // 할 일 동기화 시간 업데이트 - 로컬
+                        var syncDateDb = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "TasksSyncDate").FirstOrDefault();
                         syncDateDb.Value = DateTime.Now.ToString();
                         App.Database.Update(syncDateDb);
 
                         foreach (var s in App.Database.Table<SettingTable>().ToList())
-                            if (s.Key != "Theme" && s.Key != "Vibration" && s.Key != "SyncMail" && s.Key != "Version")
+                            if (s.Key != "Theme" && s.Key != "Vibration" && s.Key != "SyncMail" && s.Key != "Version" && s.Key != "Notification" && s.Key != "StartupTask")
                                 await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("Setting").PostAsync(s);
                         foreach (var t in App.Database.Table<DailyTaskTable>().ToList())
                             await App.Firebase.Child("UserData").Child(email.Replace('.', '_')).Child("DailyTask").PostAsync(t);
@@ -361,6 +384,8 @@ namespace Genshin_Impact_Tasks.Popups
 
                     SyncSwitch.ClassId = "1";
                     SyncSwitch.IsToggled = true;
+
+                    await PopupNavigation.Instance.RemovePageAsync(loading);
 
                     await App.Current.MainPage.DisplayAlert("동기화", "동기화가 완료되었습니다.\n계속하려면 앱을 재시작해야합니다.", "앱 종료");
                     Process.GetCurrentProcess().Kill();
@@ -389,11 +414,12 @@ namespace Genshin_Impact_Tasks.Popups
 
                     MainPage.TimerDow = false;
                     TaskTabView.TimerRepeat = false;
-                    TaskTabView.AutoSync = false;
+                    FarmingTabView.TimerRepeat = false;
+                    App.AutoSync = false;
 
                     App.Database.Table<SettingTable>().ToList().ForEach(s =>
                     {
-                        if (s.Key != "Theme" && s.Key != "Vibration" && s.Key != "Version")
+                        if (s.Key != "Theme" && s.Key != "Vibration" && s.Key != "Version" && s.Key != "Notification" && s.Key != "StartupTask")
                             App.Database.Delete(s);
                     });
                     App.Database.DropTable<DailyTaskTable>();
@@ -434,6 +460,67 @@ namespace Genshin_Impact_Tasks.Popups
         }
         #endregion
 
+        #region 자동 시작 스위치 토글 시
+        private async void StartupTaskSwitch_Toggled(object sender, ToggledEventArgs e)
+        {
+            try
+            {
+                if (ClassId == "0") return;
+
+                if (StartupTaskSwitch.ClassId == "1")
+                {
+                    StartupTaskSwitch.ClassId = "0";
+                    return;
+                }
+
+                StartupTaskSwitch.ClassId = "1";
+                StartupTaskSwitch.IsToggled = !StartupTaskSwitch.IsToggled;
+
+                var result = false;
+
+                if (StartupTaskSwitch.IsToggled)
+                {
+                    result = await DependencyService.Get<IStartupTask>().Enable();
+
+                    if (!result) return;
+                }
+                else await DependencyService.Get<IStartupTask>().Disable();
+
+                var stDb = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "StartupTask").FirstOrDefault();
+                stDb.Value = result ? "On" : "Off";
+                App.Database.Update(stDb);
+
+                StartupTaskSwitch.ClassId = "1";
+                StartupTaskSwitch.IsToggled = result;
+                App.UseStartupTask = result;
+            }
+            catch (Exception ex)
+            {
+                App.DisplayEx(ex);
+            }
+        }
+        #endregion
+
+        #region 알림 스위치 토글 시
+        private void NotificationSwitch_Toggled(object sender, ToggledEventArgs e)
+        {
+            try
+            {
+                if (ClassId == "0") return;
+
+                var notiDb = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "Notification").FirstOrDefault();
+                notiDb.Value = NotificationSwitch.IsToggled ? "On" : "Off";
+                App.Database.Update(notiDb);
+
+                App.UseNotification = NotificationSwitch.IsToggled;
+            }
+            catch (Exception ex)
+            {
+                App.DisplayEx(ex);
+            }
+        }
+        #endregion
+
         #region 진동 스위치 토글 시
         private void VibrationSwitch_Toggled(object sender, ToggledEventArgs e)
         {
@@ -461,7 +548,7 @@ namespace Genshin_Impact_Tasks.Popups
             {
                 if (ClassId == "0") return;
 
-                if (TaskTabView.AutoSync && Connectivity.NetworkAccess != NetworkAccess.Internet)
+                if (App.AutoSync && Connectivity.NetworkAccess != NetworkAccess.Internet)
                 {
                     TADDayPicker.SelectedIndex = PreviousSelected;
 
@@ -471,12 +558,12 @@ namespace Genshin_Impact_Tasks.Popups
                     return;
                 }
 
-                if (TaskTabView.AutoSync)
+                if (App.AutoSync)
                 {
                     var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).Where(item => item.Object.Key == "TaskAutoDelete").FirstOrDefault();
                     update.Object.Value = TADDayPicker.SelectedIndex.ToString();
                     await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").Child(update.Key).PutAsync(update.Object);
-                    App.UpdateServerSyncDate();
+                    App.UpdateServerTasksSyncDate();
                 }
 
                 var tadDb = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "TaskAutoDelete").FirstOrDefault();
