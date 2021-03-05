@@ -94,4 +94,10 @@
 >  <blockquote>5. 패키지 업데이트</blockquote>
 >  <blockquote> &nbsp;&nbsp;&nbsp;- FirebaseDatabase.net, Xamarin.Forms, Xamarin.Essentials</blockquote>
 >  <hr>
+>   <details>
+>    <summary><b>v1.3.1</b></summary>
+>    <hr>
+>    <blockquote>1. 인터넷에 연결되어 있을 때 주간 할 일 초기화가 안되는 점 수정</blockquote>
+>   </details>
+>  <hr>
 > </details>
