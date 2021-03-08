@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="4" android:versionName="1.3" package="com.banb.genshin_impact_tasks" android:installLocation="auto">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="5" android:versionName="1.3.1" package="com.banb.genshin_impact_tasks" android:installLocation="auto">
 	<uses-sdk android:minSdkVersion="25" android:targetSdkVersion="29" />
 	<application android:label="원신 태스크" android:theme="@style/MainTheme" android:icon="@drawable/icon"></application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

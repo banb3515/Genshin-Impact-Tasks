@@ -20,7 +20,7 @@ namespace Genshin_Impact_Tasks
 {
     public partial class App : Application
     {
-        public static string Version { get; } = "1.3 Release"; // 앱 버전
+        public static string Version { get; } = "1.3.1 Release"; // 앱 버전
         public static string SyncMail { get; set; } // 동기화 이메일
         public static bool AutoSync { get; set; } = false;
         public static bool UseDarkMode { get; set; } // 다크 모드 사용 여부

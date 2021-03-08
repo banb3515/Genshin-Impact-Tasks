@@ -76,8 +76,12 @@ namespace Genshin_Impact_Tasks.Pages
                 if (DailyTasks.Count > 0) TaskEmptyText.IsVisible = false;
                 TasksView.ItemsSource = DailyTasks;
 
+                DateChange();
+                TaskAutoDelete();
+                AutoSync();
+
                 // 날짜 변경 감지
-                Device.StartTimer(TimeSpan.FromSeconds(5), OnDetectDateChange);
+                Device.StartTimer(TimeSpan.FromSeconds(2), OnDetectDateChange);
 
                 // 완료된 할 일 자동 삭제
                 Device.StartTimer(TimeSpan.FromSeconds(5), OnTaskAutoDelete);
@@ -166,6 +170,8 @@ namespace Genshin_Impact_Tasks.Pages
         {
             try
             {
+                if (App.AutoSync && Connectivity.NetworkAccess != NetworkAccess.Internet) return;
+
                 var date = Convert.ToDateTime(App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "Date").FirstOrDefault().Value);
 
                 DateTime current;
@@ -175,7 +181,17 @@ namespace Genshin_Impact_Tasks.Pages
                 #region 일일 반복 초기화
                 if (current.ToString("yyyyMMdd") != date.ToString("yyyyMMdd"))
                 {
-                    if (App.AutoSync && Connectivity.NetworkAccess != NetworkAccess.Internet) return;
+                    if (App.AutoSync)
+                    {
+                        var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).Where(item => item.Object.Key == "Date").FirstOrDefault();
+                        update.Object.Value = current.ToString();
+                        await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").Child(update.Key).PutAsync(update.Object);
+                        App.UpdateServerTasksSyncDate();
+                    }
+
+                    var dateDb = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "Date").FirstOrDefault();
+                    dateDb.Value = current.ToString();
+                    App.Database.Update(dateDb);
 
                     var loading = new LoadingPopup("할 일을 초기화하는 중입니다.");
                     await PopupNavigation.Instance.PushAsync(loading);
@@ -199,8 +215,6 @@ namespace Genshin_Impact_Tasks.Pages
                     #region 주간 반복 초기화
                     if (current.DayOfWeek == DayOfWeek.Monday)
                     {
-                        if (Connectivity.NetworkAccess == NetworkAccess.Internet) return;
-
                         foreach (var t in App.Database.Table<WeeklyTaskTable>().ToList())
                         {
                             if (App.AutoSync)
@@ -217,19 +231,7 @@ namespace Genshin_Impact_Tasks.Pages
                         for (int i = 0; i < WeeklyTasks.Count; i++)
                             WeeklyTasks[i].Status = false;
                     }
-                    #endregion
-
-                    if (App.AutoSync)
-                    {
-                        var update = (await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").OnceAsync<SettingTable>()).Where(item => item.Object.Key == "Date").FirstOrDefault();
-                        update.Object.Value = current.ToString();
-                        await App.Firebase.Child("UserData").Child(App.SyncMail.Replace('.', '_')).Child("Setting").Child(update.Key).PutAsync(update.Object);
-                        App.UpdateServerTasksSyncDate();
-                    }
-
-                    var dateDb = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "Date").FirstOrDefault();
-                    dateDb.Value = current.ToString();
-                    App.Database.Update(dateDb);
+                    #endregion                   
 
                     TaskListRefresh();
                     await PopupNavigation.Instance.RemovePageAsync(loading);
@@ -307,7 +309,7 @@ namespace Genshin_Impact_Tasks.Pages
         {
             try
             {
-                if (Connectivity.NetworkAccess != NetworkAccess.Internet) return;
+                if (!App.AutoSync || Connectivity.NetworkAccess != NetworkAccess.Internet) return;
 
                 var localSyncDateStr = App.Database.Table<SettingTable>().ToList().Where(s => s.Key == "TasksSyncDate").FirstOrDefault().Value;
                 DateTime localSyncDate = DateTime.Now;
