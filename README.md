@@ -1,6 +1,6 @@
 # **원신 태스크(Genshin Impact Tasks)**
 
-[![Release](https://img.shields.io/badge/Release-v1.7-2F9D27?style=for-the-badge&logo=GitLab&logoColor=white)](https://gitlab.com/BanB3515/Genshin-Impact-Tasks/-/releases)
+> [![Release](https://img.shields.io/badge/Release-v1.7-2F9D27?style=for-the-badge&logo=GitLab&logoColor=white)](https://gitlab.com/BanB3515/Genshin-Impact-Tasks/-/releases)
 
 ---
 
