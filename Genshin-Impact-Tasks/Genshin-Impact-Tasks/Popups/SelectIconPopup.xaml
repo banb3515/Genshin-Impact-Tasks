@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<rg:PopupPage xmlns="http://xamarin.com/schemas/2014/forms" 
+              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+              xmlns:rg="clr-namespace:Rg.Plugins.Popup.Pages;assembly=Rg.Plugins.Popup" 
+              xmlns:sf="clr-namespace:Syncfusion.XForms.TreeView;assembly=Syncfusion.SfTreeView.XForms"
+              xmlns:helpers="clr-namespace:Genshin_Impact_Tasks.Converter"
+              x:Class="Genshin_Impact_Tasks.Popups.SelectIconPopup">
+    <rg:PopupPage.Resources>
+        <ResourceDictionary>
+            <helpers:UseDarkModeConverter x:Key="UseDarkModeConverter" />
+        </ResourceDictionary>
+    </rg:PopupPage.Resources>
+    
+    <rg:PopupPage.Content>
+        <Frame x:Name="MainFrame" BackgroundColor="White" Margin="20,40" VerticalOptions="Center" CornerRadius="25" HasShadow="True" BorderColor="Black">
+            <StackLayout>
+                <Grid HeightRequest="50">
+                    <Label Text="할 일 추가" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" HorizontalOptions="Center" VerticalOptions="Start" FontSize="Medium" FontAttributes="Bold" />
+                    <ImageButton Source="Resources/x_mark.png" HorizontalOptions="End" VerticalOptions="Start" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" WidthRequest="25" Clicked="CloseButton_Clicked" />
+                </Grid>
+
+                <sf:SfTreeView x:Name="IconPickerTreeView" ItemsSource="{Binding IconNode}" ExpandActionTarget="Node" ChildPropertyName="SubIcons" ItemTemplateContextType="Node" AutoExpandMode="None" SelectionBackgroundColor="Transparent" SelectionMode="Single" FocusBorderColor="{Binding UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" SelectionChanged="IconPickerTreeView_SelectionChanged" FocusBorderThickness="1" Margin="0,40,0,5">
+                    <sf:SfTreeView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid x:Name="grid">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Grid Padding="5,5,5,5">
+                                    <Image Source="{Binding Content.IconPath}" VerticalOptions="Center" HorizontalOptions="Center" HeightRequest="35" WidthRequest="35"/>
+                                </Grid>
+
+                                <Grid Grid.Column="1" RowSpacing="1" Padding="1,0,0,0" VerticalOptions="Center">
+                                    <Label LineBreakMode="NoWrap" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" Text="{Binding Content.Title}" VerticalTextAlignment="Center"/>
+                                </Grid>
+                            </Grid>
+                        </DataTemplate>
+                    </sf:SfTreeView.ItemTemplate>
+                </sf:SfTreeView>
+            </StackLayout>
+        </Frame>
+    </rg:PopupPage.Content>
+</rg:PopupPage>

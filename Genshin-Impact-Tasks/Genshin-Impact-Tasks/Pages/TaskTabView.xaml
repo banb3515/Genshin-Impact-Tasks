@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ContentView xmlns="http://xamarin.com/schemas/2014/forms" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:Genshin_Impact_Tasks.Converter"
+             x:Class="Genshin_Impact_Tasks.Pages.TaskTabView">
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <helpers:CompleteColorConverter x:Key="CompleteColorConverter" />
+            <helpers:UseDarkModeConverter x:Key="UseDarkModeConverter" />
+        </ResourceDictionary>
+    </ContentView.Resources>
+    
+    <ContentView.Content>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="50" />
+            </Grid.RowDefinitions>
+            
+            <Grid Grid.Row="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="1" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                
+                <!-- Title -->
+                <Grid Grid.Row="0" Margin="5,0,5,5">
+                    <StackLayout Orientation="Horizontal">
+                        <ImageButton x:Name="RefreshTasksViewButton" Source="Resources/refresh.png" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" Clicked="RefreshTasksViewButton_Clicked" Margin="0,0,5,0" />
+                        <Button x:Name="OTTCompleteListButton" Text="완료 보기" IsVisible="False" HeightRequest="50" WidthRequest="120"  VerticalOptions="Center" HorizontalOptions="Start" CornerRadius="15" BorderColor="Black" BorderWidth="0.5" Clicked="OTTCompleteListButton_Clicked" />
+                    </StackLayout>
+                    <Label x:Name="Title" Text="일일 반복" FontSize="Medium" FontAttributes="Bold" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" VerticalOptions="Center" HorizontalOptions="Center" />
+                    <Button x:Name="AddTaskButton" Text="추가" Image="Resources/plus_small.png" HeightRequest="50" WidthRequest="120" ContentLayout="Left" VerticalOptions="Center" HorizontalOptions="End" CornerRadius="15" BorderColor="Black" BorderWidth="0.5" Clicked="AddTaskButton_Clicked" />
+                </Grid>
+                
+                <!-- Divider -->
+                <BoxView Grid.Row="1" x:Name="Divider" HeightRequest="1" Color="Black" Margin="5,0" />
+
+                <!-- #region Tasks -->
+                <RefreshView Grid.Row="2" x:Name="TasksRefreshView" Refreshing="TasksView_Refreshing">
+                    <ListView x:Name="TasksView" SelectionMode="None" ItemTapped="TasksView_ItemTapped" HasUnevenRows="True" SeparatorVisibility="None">
+                        <ListView.Header>
+                            <Label x:Name="TaskEmptyText" Text="할 일이 없습니다." FontSize="Medium" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" HorizontalOptions="Center">
+                                <Label.Triggers>
+                                    <Trigger TargetType="Label" Property="IsVisible" Value="False">
+                                        <Setter Property="HeightRequest" Value="0" />
+                                    </Trigger>
+                                </Label.Triggers>
+                            </Label>
+                        </ListView.Header>
+
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <ViewCell>
+                                    <Grid Margin="5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="50" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="45" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Frame Grid.Column="0" Grid.ColumnSpan="3" BackgroundColor="{Binding Status, Converter={x:StaticResource CompleteColorConverter}}" Opacity="0.75" CornerRadius="20" HasShadow="True" Margin="0,2" />
+
+                                        <Image Grid.Column="0" Source="{Binding IconPath}" WidthRequest="30" HeightRequest="30" Margin="15,0,5,0" />
+                                        <Label Grid.Column="1" Text="{Binding Content}" TextColor="Black" FontSize="Small" VerticalTextAlignment="Center" Margin="0,2" />
+                                        <ImageButton Grid.Column="2" Source="Resources/more.png" CommandParameter="{Binding No}" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" Margin="5,0,15,0" Clicked="MoreButton_Clicked" />
+                                    </Grid>
+                                </ViewCell>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </RefreshView>
+                <!-- #endregion -->
+            </Grid>
+
+            <Grid Grid.Row="1" Margin="5,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <Button x:Name="DailyTasksButton" Grid.Column="0" Text="일일 반복" CornerRadius="5" BorderColor="Black" BorderWidth="1" BindingContext="Daily" Clicked="NavigateTaskList_Clicked" />
+                <Button x:Name="WeeklyTasksButton" Grid.Column="1" Text="주간 반복" CornerRadius="5" BorderColor="Black" BorderWidth="1" BindingContext="Weekly" Clicked="NavigateTaskList_Clicked" />
+                <Button x:Name="OneTimeTasksButton" Grid.Column="2" Text="할 일" CornerRadius="5" BorderColor="Black" BorderWidth="1" BindingContext="OneTime" Clicked="NavigateTaskList_Clicked" />
+            </Grid>
+        </Grid>
+    </ContentView.Content>
+</ContentView>

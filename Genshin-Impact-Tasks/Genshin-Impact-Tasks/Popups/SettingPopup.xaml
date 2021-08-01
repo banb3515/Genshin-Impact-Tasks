@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<rg:PopupPage xmlns="http://xamarin.com/schemas/2014/forms"
+              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+              xmlns:rg="clr-namespace:Rg.Plugins.Popup.Pages;assembly=Rg.Plugins.Popup" 
+              xmlns:helpers="clr-namespace:Genshin_Impact_Tasks.Converter"
+              x:Class="Genshin_Impact_Tasks.Popups.SettingPopup"
+              ClassId="0">
+    <rg:PopupPage.Resources>
+        <ResourceDictionary>
+            <helpers:UseDarkModeConverter x:Key="UseDarkModeConverter" />
+        </ResourceDictionary>
+    </rg:PopupPage.Resources>
+    
+    <rg:PopupPage.Content>
+        <Frame x:Name="MainFrame" BackgroundColor="White" Margin="20,40" VerticalOptions="Center" CornerRadius="25" HasShadow="True" BorderColor="Black">
+            <StackLayout>
+                <Grid HeightRequest="30">
+                    <Label Text="설정" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" HorizontalOptions="Center" VerticalOptions="Start" FontSize="Medium" FontAttributes="Bold" />
+                    <ImageButton x:Name="CloseButton" Source="Resources/x_mark.png" HorizontalOptions="End" VerticalOptions="Start" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" WidthRequest="25" Clicked="CloseButton_Clicked" />
+                </Grid>
+
+                <ScrollView>
+                    <StackLayout Margin="5">
+                        <!-- #region 동기화됨 -->
+                        <Label Grid.Column="1" x:Name="SyncMailText" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" VerticalTextAlignment="Center" VerticalOptions="Center" HorizontalTextAlignment="Center" FontSize="Medium" HeightRequest="30" Margin="5,0" />
+                        <!-- #endregion -->
+
+                        <!-- #region 자동 시작 -->
+                        <Grid x:Name="StartupTaskSetting">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Image Grid.Column="0" x:Name="StartupTaskIcon" Source="Resources/icon.png" HeightRequest="30" Margin="0,5" />
+                            <Label Grid.Column="1" Text="자동 시작" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" VerticalTextAlignment="Center" VerticalOptions="Center" FontSize="Small" HeightRequest="40" Margin="5" />
+                            <Switch Grid.Column="2" x:Name="StartupTaskSwitch" ThumbColor="LightGreen" OnColor="Gray" Toggled="StartupTaskSwitch_Toggled" VerticalOptions="Center" />
+                        </Grid>
+                        <!-- #endregion -->
+
+                        <!-- #region 동기화 -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Image Grid.Column="0" x:Name="SyncIcon" Source="Resources/sync.png" HeightRequest="30" Margin="0,5" />
+                            <Label Grid.Column="1" Text="동기화" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" VerticalTextAlignment="Center" VerticalOptions="Center" FontSize="Small" HeightRequest="40" Margin="5" />
+                            <Switch Grid.Column="2" x:Name="SyncSwitch" ClassId="0" ThumbColor="LightGreen" OnColor="Gray" Toggled="SyncSwitch_Toggled" VerticalOptions="Center" />
+                        </Grid>
+                        <!-- #endregion -->                       
+
+                        <!-- #region 알림 -->
+                        <Grid x:Name="NotificationSetting">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Image Grid.Column="0" x:Name="NotificationIcon" Source="Resources/notification.png" HeightRequest="30" Margin="0,5" />
+                            <Label Grid.Column="1" Text="알림" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" VerticalTextAlignment="Center" VerticalOptions="Center" FontSize="Small" HeightRequest="40" Margin="5" />
+                            <Switch Grid.Column="2" x:Name="NotificationSwitch" ThumbColor="LightGreen" OnColor="Gray" Toggled="NotificationSwitch_Toggled" VerticalOptions="Center" />
+                        </Grid>
+                        <!-- #endregion -->
+
+                        <!-- #region 진동 (안드로이드 전용) -->
+                        <Grid x:Name="VibrationSetting">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Image Grid.Column="0" x:Name="VibrationIcon" Source="Resources/vibration.png" HeightRequest="30" Margin="0,5" />
+                            <Label Grid.Column="1" Text="진동" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" VerticalTextAlignment="Center" VerticalOptions="Center" FontSize="Small" HeightRequest="40" Margin="5" />
+                            <Switch Grid.Column="2" x:Name="VibrationSwitch" ThumbColor="LightGreen" OnColor="Gray" Toggled="VibrationSwitch_Toggled" VerticalOptions="Center" />
+                        </Grid>
+                        <!-- #endregion -->
+
+                        <!-- #region 완료된 할 일 삭제 주기 -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Image Grid.Column="0" x:Name="TADIcon" Source="Resources/delete.png" HeightRequest="30" Margin="0,5" />
+                            <Label Grid.Column="1" Text="완료된 할 일 삭제 주기" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" VerticalTextAlignment="Center" VerticalOptions="Center" FontSize="Small" HeightRequest="40" Margin="5" />
+                            <Picker Grid.Column="2" x:Name="TADDayPicker" HorizontalTextAlignment="Center" FontSize="Small" VerticalOptions="End" SelectedIndexChanged="TADDayPicker_SelectedIndexChanged" HeightRequest="40" Margin="0,5" WidthRequest="80" />
+                        </Grid>
+                        <!-- #endregion -->
+
+                        <!-- #region 테마 -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Image Grid.Column="0" x:Name="ThemeIcon" Source="Resources/theme.png" HeightRequest="30" Margin="0,5" />
+                            <Label Grid.Column="1" Text="테마" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" VerticalTextAlignment="Center" VerticalOptions="Center" FontSize="Small" HeightRequest="40" Margin="5" />
+                            <Picker Grid.Column="2" x:Name="ThemePicker" HorizontalTextAlignment="Center" FontSize="Small" VerticalOptions="End" SelectedIndexChanged="ThemePicker_SelectedIndexChanged" HeightRequest="40" Margin="0,5" WidthRequest="100" />
+                        </Grid>
+                        <!-- #endregion -->
+
+                        <BoxView x:Name="Divider" HeightRequest="1" Color="Black" Margin="0,5" />
+
+                        <!-- #region 버그 제보/건의 사항 -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+
+                            <Button x:Name="BugButton" Grid.Column="0" Text="버그 제보" ClassId="Bug" HeightRequest="40" CornerRadius="5" ContentLayout="Left" Image="Resources/bug.png" BorderColor="Black" BorderWidth="1" Clicked="BugFeedbackButton_Clicked" />
+                            <Button x:Name="FeedbackButton" Grid.Column="1" Text="건의 사항" ClassId="Feedback" HeightRequest="40" CornerRadius="5" ContentLayout="Left" Image="Resources/feedback.png" BorderColor="Black" BorderWidth="1" Clicked="BugFeedbackButton_Clicked" />
+                        </Grid>
+                        <!-- #endregion -->
+                        
+                        <!-- #region 라이선스/GitHub -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+
+                            <Button x:Name="LicenseButton" Grid.Column="0" Text="라이선스" HeightRequest="40" CornerRadius="5" ContentLayout="Left" Image="Resources/license.png" BorderColor="Black" BorderWidth="1" Clicked="ViewLicenseButton_Clicked" />
+                            <Button x:Name="GitHubButton" Grid.Column="1" Text="GitHub" HeightRequest="40" CornerRadius="5" ContentLayout="Left" Image="Resources/github.png" BorderColor="Black" BorderWidth="1" Clicked="MoveGitHubButton_Clicked" />
+                        </Grid>
+                        <!-- #endregion -->
+
+                        <!-- #region 정보 -->
+                        <Label x:Name="InfoText" FontAttributes="Bold" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" TextColor="{Binding App.UseDarkMode, Converter={x:StaticResource UseDarkModeConverter}}" Padding="0,5" />
+                        <!-- #endregion -->
+                    </StackLayout>
+                </ScrollView>
+            </StackLayout>
+        </Frame>
+    </rg:PopupPage.Content>
+</rg:PopupPage>

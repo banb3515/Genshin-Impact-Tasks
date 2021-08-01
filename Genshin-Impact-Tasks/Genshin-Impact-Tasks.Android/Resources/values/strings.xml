@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="daily_task">일일 반복</string>
+	<string name="weekly_task">주간 반복</string>
+	<string name="one_time_task">할 일</string>
+	<string name="empty_text">할 일이 비어있습니다.</string>
+	<string name="white_theme_text">밝은 테마</string>
+	<string name="dark_theme_text">어두운 테마</string>
+	<string name="background_opacity_text">배경 투명도</string>
+	<string name="configure_ok_text">설정 완료</string>
+	<string name="selected_theme_text">선택된 테마:</string>
+	<string name="task_widget_configure_title">할 일 위젯 설정</string>
+</resources>

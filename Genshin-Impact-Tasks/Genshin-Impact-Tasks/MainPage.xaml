@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:pages="clr-namespace:Genshin_Impact_Tasks.Pages"
+             x:Class="Genshin_Impact_Tasks.MainPage"
+             Appearing="ContentPage_Appearing"
+             ClassId="0">
+    <ContentPage.Content>
+        <Grid x:Name="MainGrid">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="120" />
+                <RowDefinition Height="40" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            
+            <!-- #region Top -->
+            <Frame Grid.Row="0" x:Name="TopFrame" BackgroundColor="Gray" Padding="24" CornerRadius="0">
+                <Frame.GestureRecognizers>
+                    <SwipeGestureRecognizer Direction="Down" Swiped="TopFrame_DownSwiped" />
+                    <SwipeGestureRecognizer Direction="Up" Swiped="TopFrame_UpSwiped" />
+                </Frame.GestureRecognizers>
+                
+                <Grid Margin="-10,-10,-10,0">
+                    <!-- Current Tab Info -->
+                    <StackLayout Orientation="Horizontal" Margin="0">
+                        <Image x:Name="CurrentTabImage" Source="Resources/task.png" HeightRequest="25" />
+                        <Label x:Name="CurrentTabTitle" Text="할 일" FontAttributes="Bold" FontSize="Medium" TextColor="White" VerticalTextAlignment="Center" />
+                    </StackLayout>
+
+                    <!-- Day Of Week -->
+                    <Label x:Name="CurrentDateText" Text="초기화 중 ..." Grid.RowSpan="3" FontAttributes="Bold" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" TextColor="White" FontSize="36"/>
+                    
+                    <!-- Setting Button -->
+                    <StackLayout Orientation="Horizontal" HorizontalOptions="End">
+                        <ImageButton x:Name="SettingButton" Source="Resources/setting.png" BorderColor="Transparent" BackgroundColor="Transparent" HeightRequest="25" Clicked="SettingButton_Clicked" />
+                    </StackLayout>
+                </Grid>
+            </Frame>
+            <!-- #endregion -->
+
+            <!-- Tab List Dropdown Button -->
+            <Button Grid.Row="1" x:Name="TabListDropdownBtn" Text="▼" FontSize="Small" CornerRadius="5" Clicked="TabListDropdownBtn_Clicked" Margin="5,0" BorderColor="Black" BorderWidth="1" HeightRequest="80" />
+
+            <Grid x:Name="TabViewGrid" Grid.Row="2" Margin="5,0,5,10">
+                <!-- #region TabBar -->
+                <Grid x:Name="TabBar" IsVisible="False">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="50" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Task Tab -->
+                    <Button x:Name="TaskTabBtn" Text="할 일" Grid.Column="0" CornerRadius="5" ContentLayout="Left" Image="Resources/task.png" BindingContext="Task" Clicked="NavigateTab_Clicked" BorderColor="Black" BorderWidth="1" />
+                    <!-- Farming Tab -->
+                    <Button x:Name="FarmingTabBtn" Text="파밍" Grid.Column="1" CornerRadius="5" ContentLayout="Left" Image="Resources/tab_farming.png" BindingContext="Farming" Clicked="NavigateTab_Clicked" BorderColor="Black" BorderWidth="1" />
+                    <!-- Domains Tab -->
+                    <Button x:Name="DomainsTabBtn" Text="비경" Grid.Column="2" CornerRadius="5" ContentLayout="Left" Image="Resources/domains.png" BindingContext="Domains" Clicked="NavigateTab_Clicked" BorderColor="Black" BorderWidth="1" />
+                </Grid>
+                <!-- #endregion -->
+
+                <!-- #region Tabs -->
+                <Grid x:Name="TabView">
+                    <!-- Task Tab -->
+                    <pages:TaskTabView x:Name="TaskTab" />
+                    <!-- Farming Tab -->
+                    <pages:FarmingTabView x:Name="FarmingTab" IsVisible="False" />
+                </Grid>
+                <!-- #endregion -->
+            </Grid>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

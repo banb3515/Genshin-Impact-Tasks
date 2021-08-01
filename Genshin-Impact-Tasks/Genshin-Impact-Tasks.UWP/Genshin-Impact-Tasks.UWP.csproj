@@ -1,0 +1,495 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProjectGuid>{EAFDE719-8200-4AB0-A524-D4F535310B6C}</ProjectGuid>
+    <OutputType>AppContainerExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Genshin_Impact_Tasks.UWP</RootNamespace>
+    <AssemblyName>Genshin-Impact-Tasks.UWP</AssemblyName>
+    <DefaultLanguage>ko-KR</DefaultLanguage>
+    <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
+    <TargetPlatformVersion>10.0.18362.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
+    <EnableDotNetNativeCompatibleProfile>true</EnableDotNetNativeCompatibleProfile>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
+    <PackageCertificateThumbprint>9D1C3198FDCB01DD4368C21CCB164A05605ACDCD</PackageCertificateThumbprint>
+    <PackageCertificateKeyFile />
+    <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+    <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+    <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
+    <GenerateTestArtifacts>True</GenerateTestArtifacts>
+    <AppxBundle>Always</AppxBundle>
+    <AppxBundlePlatforms>x86|x64|arm</AppxBundlePlatforms>
+    <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\ARM\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <NoWarn>;2008</NoWarn>
+    <DebugType>full</DebugType>
+    <PlatformTarget>ARM</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM'">
+    <OutputPath>bin\ARM\Release\</OutputPath>
+    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <Optimize>true</Optimize>
+    <NoWarn>;2008</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>ARM</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+    <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <NoWarn>;2008</NoWarn>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <Optimize>true</Optimize>
+    <NoWarn>;2008</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+    <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <NoWarn>;2008</NoWarn>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <Optimize>true</Optimize>
+    <NoWarn>;2008</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+    <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="App.xaml.cs">
+      <DependentUpon>App.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="MainPage.xaml.cs">
+      <DependentUpon>MainPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\UWPNotificationManager.cs" />
+    <Compile Include="Services\UWPStartupTask.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest">
+      <SubType>Designer</SubType>
+    </AppxManifest>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\App Logo.altform-lightunplated_targetsize-16.png" />
+    <Content Include="Assets\App Logo.altform-lightunplated_targetsize-24.png" />
+    <Content Include="Assets\App Logo.altform-lightunplated_targetsize-256.png" />
+    <Content Include="Assets\App Logo.altform-lightunplated_targetsize-32.png" />
+    <Content Include="Assets\App Logo.altform-lightunplated_targetsize-48.png" />
+    <Content Include="Assets\App Logo.altform-unplated_targetsize-16.png" />
+    <Content Include="Assets\App Logo.altform-unplated_targetsize-24.png" />
+    <Content Include="Assets\App Logo.altform-unplated_targetsize-256.png" />
+    <Content Include="Assets\App Logo.altform-unplated_targetsize-32.png" />
+    <Content Include="Assets\App Logo.altform-unplated_targetsize-48.png" />
+    <Content Include="Assets\App Logo.scale-100.png" />
+    <Content Include="Assets\App Logo.scale-125.png" />
+    <Content Include="Assets\App Logo.scale-150.png" />
+    <Content Include="Assets\App Logo.scale-200.png" />
+    <Content Include="Assets\App Logo.scale-400.png" />
+    <Content Include="Assets\App Logo.targetsize-16.png" />
+    <Content Include="Assets\App Logo.targetsize-24.png" />
+    <Content Include="Assets\App Logo.targetsize-256.png" />
+    <Content Include="Assets\App Logo.targetsize-32.png" />
+    <Content Include="Assets\App Logo.targetsize-48.png" />
+    <Content Include="Assets\LargeTile.scale-100.png" />
+    <Content Include="Assets\LargeTile.scale-125.png" />
+    <Content Include="Assets\LargeTile.scale-150.png" />
+    <Content Include="Assets\LargeTile.scale-200.png" />
+    <Content Include="Assets\LargeTile.scale-400.png" />
+    <Content Include="Assets\SmallTile.scale-100.png" />
+    <Content Include="Assets\SmallTile.scale-125.png" />
+    <Content Include="Assets\SmallTile.scale-150.png" />
+    <Content Include="Assets\SmallTile.scale-200.png" />
+    <Content Include="Assets\SmallTile.scale-400.png" />
+    <Content Include="Assets\SplashScreen.scale-100.png" />
+    <Content Include="Assets\SplashScreen.scale-125.png" />
+    <Content Include="Assets\SplashScreen.scale-150.png" />
+    <Content Include="Assets\SplashScreen.scale-200.png" />
+    <Content Include="Assets\SplashScreen.scale-400.png" />
+    <Content Include="Assets\Square150x150Logo.scale-100.png" />
+    <Content Include="Assets\Square150x150Logo.scale-125.png" />
+    <Content Include="Assets\Square150x150Logo.scale-150.png" />
+    <Content Include="Assets\Square150x150Logo.scale-200.png" />
+    <Content Include="Assets\Square150x150Logo.scale-400.png" />
+    <Content Include="Assets\Square44x44Logo.altform-unplated_targetsize-16.png" />
+    <Content Include="Assets\Square44x44Logo.altform-unplated_targetsize-256.png" />
+    <Content Include="Assets\Square44x44Logo.altform-unplated_targetsize-48.png" />
+    <Content Include="Assets\Square44x44Logo.scale-100.png" />
+    <Content Include="Assets\Square44x44Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.scale-400.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-16.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-256.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-48.png" />
+    <Content Include="Assets\StoreLogo.scale-100.png" />
+    <Content Include="Assets\StoreLogo.scale-125.png" />
+    <Content Include="Assets\StoreLogo.scale-150.png" />
+    <Content Include="Assets\StoreLogo.scale-200.png" />
+    <Content Include="Assets\StoreLogo.scale-400.png" />
+    <Content Include="Assets\Wide310x150Logo.scale-100.png" />
+    <Content Include="Assets\Wide310x150Logo.scale-125.png" />
+    <Content Include="Assets\Wide310x150Logo.scale-150.png" />
+    <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Content Include="Assets\Wide310x150Logo.scale-400.png" />
+    <None Include="Package.StoreAssociation.xml" />
+    <Content Include="Properties\Default.rd.xml" />
+    <Content Include="Resources\artifact_bloodstained_flower_of_iron.png" />
+    <Content Include="Resources\artifact_flower_of_creviced_cliff.png" />
+    <Content Include="Resources\artifact_gilded_corsage.png" />
+    <Content Include="Resources\artifact_gladiators_nostalgia.png" />
+    <Content Include="Resources\artifact_in_remembrance_of_viridescent_fields.png" />
+    <Content Include="Resources\artifact_lavawalker_resolution.png" />
+    <Content Include="Resources\artifact_maidens_distant_love.png" />
+    <Content Include="Resources\artifact_royal_flora.png" />
+    <Content Include="Resources\artifact_snowswept_memory.png" />
+    <Content Include="Resources\artifact_summer_nights_bloom.png" />
+    <Content Include="Resources\artifact_thunderbirds_mercy.png" />
+    <Content Include="Resources\artifact_thundersoother_heart.png" />
+    <Content Include="Resources\artifact_troupes_dawnlight.png" />
+    <Content Include="Resources\artifact_witchs_flower_of_blaze.png" />
+    <Content Include="Resources\ascension_agnidus_agate_gemstone.png" />
+    <Content Include="Resources\ascension_basalt_pillar.png" />
+    <Content Include="Resources\ascension_boreal_wolfs_nostalgia.png" />
+    <Content Include="Resources\ascension_brilliant_diamond_gemstone.png" />
+    <Content Include="Resources\ascension_chunk_of_aerosiderite.png" />
+    <Content Include="Resources\ascension_cleansing_heart.png" />
+    <Content Include="Resources\ascension_divine_body_from_guyun.png" />
+    <Content Include="Resources\ascension_dream_of_the_dandelion_gladiator.png" />
+    <Content Include="Resources\ascension_everflame_seed.png" />
+    <Content Include="Resources\ascension_hoarfrost_core.png" />
+    <Content Include="Resources\ascension_hurricane_seed.png" />
+    <Content Include="Resources\ascension_juvenile_jade.png" />
+    <Content Include="Resources\ascension_lightning_prism.png" />
+    <Content Include="Resources\ascension_mist_veiled_primo_elixir.png" />
+    <Content Include="Resources\ascension_prithiva_topaz_gemstone.png" />
+    <Content Include="Resources\ascension_scattered_piece_of_decarabian_dream.png" />
+    <Content Include="Resources\ascension_shivada_jade_gemstone.png" />
+    <Content Include="Resources\ascension_vajrada_amethyst_gemstone.png" />
+    <Content Include="Resources\ascension_varunada_lazurite_gemstone.png" />
+    <Content Include="Resources\ascension_vayuda_turquoise_gemstone.png" />
+    <Content Include="Resources\boss_andrius.png" />
+    <Content Include="Resources\boss_anemo_hypostasis.png" />
+    <Content Include="Resources\boss_cryo_regisvine.png" />
+    <Content Include="Resources\boss_dvalin.png" />
+    <Content Include="Resources\boss_electro_hypostasis.png" />
+    <Content Include="Resources\boss_geo_hypostasis.png" />
+    <Content Include="Resources\boss_oceanid.png" />
+    <Content Include="Resources\boss_primo_geovishap.png" />
+    <Content Include="Resources\boss_pyro_regisvine.png" />
+    <Content Include="Resources\boss_tartaglia.png" />
+    <Content Include="Resources\bug.png" />
+    <Content Include="Resources\character_albedo.png" />
+    <Content Include="Resources\character_amber.png" />
+    <Content Include="Resources\character_barbara.png" />
+    <Content Include="Resources\character_beidou.png" />
+    <Content Include="Resources\character_bennett.png" />
+    <Content Include="Resources\character_chongyun.png" />
+    <Content Include="Resources\character_diluc.png" />
+    <Content Include="Resources\character_diona.png" />
+    <Content Include="Resources\character_fischl.png" />
+    <Content Include="Resources\character_ganyu.png" />
+    <Content Include="Resources\character_hu_tao.png" />
+    <Content Include="Resources\character_jean.png" />
+    <Content Include="Resources\character_kaeya.png" />
+    <Content Include="Resources\character_keqing.png" />
+    <Content Include="Resources\character_klee.png" />
+    <Content Include="Resources\character_lisa.png" />
+    <Content Include="Resources\character_mona.png" />
+    <Content Include="Resources\character_ningguang.png" />
+    <Content Include="Resources\character_noelle.png" />
+    <Content Include="Resources\character_qiqi.png" />
+    <Content Include="Resources\character_razor.png" />
+    <Content Include="Resources\character_sucrose.png" />
+    <Content Include="Resources\character_tartaglia.png" />
+    <Content Include="Resources\character_traveler.png" />
+    <Content Include="Resources\character_venti.png" />
+    <Content Include="Resources\character_xiangling.png" />
+    <Content Include="Resources\character_xiao.png" />
+    <Content Include="Resources\character_xingqiu.png" />
+    <Content Include="Resources\character_xinyan.png" />
+    <Content Include="Resources\character_zhongli.png" />
+    <Content Include="Resources\collection_calla_lily.png" />
+    <Content Include="Resources\collection_cecilia.png" />
+    <Content Include="Resources\collection_dandelion_seed.png" />
+    <Content Include="Resources\collection_flaming_flower_stamen.png" />
+    <Content Include="Resources\collection_glaze_lily.png" />
+    <Content Include="Resources\collection_jueyun_chili.png" />
+    <Content Include="Resources\collection_mist_flower_corolla.png" />
+    <Content Include="Resources\collection_philanemo_mushroom.png" />
+    <Content Include="Resources\collection_qingxin.png" />
+    <Content Include="Resources\collection_silk_flower.png" />
+    <Content Include="Resources\collection_small_lamp_grass.png" />
+    <Content Include="Resources\collection_valberry.png" />
+    <Content Include="Resources\collection_violetgrass.png" />
+    <Content Include="Resources\collection_windwheel_aster.png" />
+    <Content Include="Resources\collection_wolfhook.png" />
+    <Content Include="Resources\delete.png" />
+    <Content Include="Resources\delete_white.png" />
+    <Content Include="Resources\domains.png" />
+    <Content Include="Resources\enemy_eye_of_the_storm.png" />
+    <Content Include="Resources\enemy_fatui_electro_cicin_mage.png" />
+    <Content Include="Resources\enemy_fatui_pyro_agent.png" />
+    <Content Include="Resources\enemy_geovishap.png" />
+    <Content Include="Resources\enemy_geovishap_hatchling.png" />
+    <Content Include="Resources\enemy_hydro_abyss_mage.png" />
+    <Content Include="Resources\enemy_mitachurl.png" />
+    <Content Include="Resources\enemy_ruin_guard.png" />
+    <Content Include="Resources\enemy_ruin_hunter.png" />
+    <Content Include="Resources\enemy_stonehide_lawachurl.png" />
+    <Content Include="Resources\enhancement_heros_wit.png" />
+    <Content Include="Resources\enhancement_mystic_enhancement_ore.png" />
+    <Content Include="Resources\experience_adventure.png" />
+    <Content Include="Resources\experience_battle_pass.png" />
+    <Content Include="Resources\experience_character.png" />
+    <Content Include="Resources\experience_liyue_reputation.png" />
+    <Content Include="Resources\experience_mondstadt_reputation.png" />
+    <Content Include="Resources\eyes_anemoculus.png" />
+    <Content Include="Resources\eyes_crimson_agate.png" />
+    <Content Include="Resources\eyes_geoculus.png" />
+    <Content Include="Resources\feedback.png" />
+    <Content Include="Resources\food_adeptus_temptation.png" />
+    <Content Include="Resources\food_adventurers_breakfast_sandwich.png" />
+    <Content Include="Resources\food_almond_tofu.png" />
+    <Content Include="Resources\food_apple.png" />
+    <Content Include="Resources\food_apple_cider.png" />
+    <Content Include="Resources\food_bamboo_shoot_soup.png" />
+    <Content Include="Resources\food_barbatos_ratatouille.png" />
+    <Content Include="Resources\food_berry_mint_rurst.png" />
+    <Content Include="Resources\food_black_back_perch_stew.png" />
+    <Content Include="Resources\food_calla_lily_seafood_soup.png" />
+    <Content Include="Resources\food_chicken_mushroom_skewer.png" />
+    <Content Include="Resources\food_cold_cut_platter.png" />
+    <Content Include="Resources\food_come_and_get_it.png" />
+    <Content Include="Resources\food_crab_ham_veggie_bake.png" />
+    <Content Include="Resources\food_cream_stew.png" />
+    <Content Include="Resources\food_crystal_shrimp.png" />
+    <Content Include="Resources\food_fishermans_toast.png" />
+    <Content Include="Resources\food_flaming_red_bolognese.png" />
+    <Content Include="Resources\food_fried_radish_balls.png" />
+    <Content Include="Resources\food_fullmoon_egg.png" />
+    <Content Include="Resources\food_golden_crab.png" />
+    <Content Include="Resources\food_golden_shrimp_balls.png" />
+    <Content Include="Resources\food_goulash.png" />
+    <Content Include="Resources\food_grilled_tiger_fish.png" />
+    <Content Include="Resources\food_holy_water.png" />
+    <Content Include="Resources\food_jade_parcels.png" />
+    <Content Include="Resources\food_jewelry_soup.png" />
+    <Content Include="Resources\food_jueyun_chili_chicken.png" />
+    <Content Include="Resources\food_jueyun_guoba.png" />
+    <Content Include="Resources\food_lotus_flower_crisp.png" />
+    <Content Include="Resources\food_lotus_seed_and_bird_egg_soup.png" />
+    <Content Include="Resources\food_matsutake_meat_rolls.png" />
+    <Content Include="Resources\food_mondstadt_grilled_fish.png" />
+    <Content Include="Resources\food_mondstadt_hash_brown.png" />
+    <Content Include="Resources\food_moon_pie.png" />
+    <Content Include="Resources\food_mora_meat.png" />
+    <Content Include="Resources\food_mushroom_pizza.png" />
+    <Content Include="Resources\food_noodles_with_mountain_delicacies.png" />
+    <Content Include="Resources\food_northern_apple_stew.png" />
+    <Content Include="Resources\food_northern_smoked_chicken.png" />
+    <Content Include="Resources\food_pile_em_up.png" />
+    <Content Include="Resources\food_pops_teas.png" />
+    <Content Include="Resources\food_qingce_stir_fry.png" />
+    <Content Include="Resources\food_radish_veggie_soup.png" />
+    <Content Include="Resources\food_satisfying_salad.png" />
+    <Content Include="Resources\food_saut_fed_matsutake.png" />
+    <Content Include="Resources\food_squirrel_fish.png" />
+    <Content Include="Resources\food_steak.png" />
+    <Content Include="Resources\food_sticky_honey_roast.png" />
+    <Content Include="Resources\food_stir_fried_filet.png" />
+    <Content Include="Resources\food_stone_harbor_delicacies.png" />
+    <Content Include="Resources\food_sunsettia.png" />
+    <Content Include="Resources\food_sunshine_sprat.png" />
+    <Content Include="Resources\food_sweet_madame.png" />
+    <Content Include="Resources\food_tea_break_pancake.png" />
+    <Content Include="Resources\food_teyvat_fried_egg.png" />
+    <Content Include="Resources\food_tianshu_meat.png" />
+    <Content Include="Resources\food_triple_layered_consomm.png" />
+    <Content Include="Resources\food_universal_peace.png" />
+    <Content Include="Resources\food_vegetarian_abalone.png" />
+    <Content Include="Resources\food_wolfhook_juice.png" />
+    <Content Include="Resources\food_zhongyuan_chop_suey.png" />
+    <Content Include="Resources\github.png" />
+    <Content Include="Resources\icon.png" />
+    <Content Include="Resources\item_condensed_resin.png" />
+    <Content Include="Resources\item_story_key.png" />
+    <Content Include="Resources\license.png" />
+    <Content Include="Resources\material_black_crystal_horn.png" />
+    <Content Include="Resources\material_chaos_core.png" />
+    <Content Include="Resources\material_crystal_core.png" />
+    <Content Include="Resources\material_energy_nectar.png" />
+    <Content Include="Resources\material_forbidden_curse_scroll.png" />
+    <Content Include="Resources\material_fossilized_bone_shard.png" />
+    <Content Include="Resources\material_golden_raven_insignia.png" />
+    <Content Include="Resources\material_inspectors_sacrificial_knife.png" />
+    <Content Include="Resources\material_ley_line_sprouts.png" />
+    <Content Include="Resources\material_lieutenants_insignia.png" />
+    <Content Include="Resources\material_mist_grass_wick.png" />
+    <Content Include="Resources\material_ominous_mask.png" />
+    <Content Include="Resources\material_slime_concentrate.png" />
+    <Content Include="Resources\material_weathered_arrowhead.png" />
+    <Content Include="Resources\mineral_cor_lapis.png" />
+    <Content Include="Resources\mineral_crystal_chunk.png" />
+    <Content Include="Resources\mineral_electro_crystal.png" />
+    <Content Include="Resources\mineral_iron_chunk.png" />
+    <Content Include="Resources\mineral_magical_crystal_chunk.png" />
+    <Content Include="Resources\mineral_noctilucous_jade.png" />
+    <Content Include="Resources\mineral_starsilver.png" />
+    <Content Include="Resources\mineral_white_iron_chunk.png" />
+    <Content Include="Resources\more.png" />
+    <Content Include="Resources\notification.png" />
+    <Content Include="Resources\notification_white.png" />
+    <Content Include="Resources\npc_chloris.png" />
+    <Content Include="Resources\npc_hertha.png" />
+    <Content Include="Resources\npc_paimon.png" />
+    <Content Include="Resources\other_fragile_resin.png" />
+    <Content Include="Resources\plus.png" />
+    <Content Include="Resources\plus_small.png" />
+    <Content Include="Resources\quest_commission.png" />
+    <Content Include="Resources\quest_quest.png" />
+    <Content Include="Resources\refresh.png" />
+    <Content Include="Resources\setting.png" />
+    <Content Include="Resources\sync.png" />
+    <Content Include="Resources\sync_white.png" />
+    <Content Include="Resources\tab_farming.png" />
+    <Content Include="Resources\tab_philanemo_mushroom.png" />
+    <Content Include="Resources\talent_crown_of_insight.png" />
+    <Content Include="Resources\talent_dvalins_claw.png" />
+    <Content Include="Resources\talent_dvalins_plume.png" />
+    <Content Include="Resources\talent_dvalins_sigh.png" />
+    <Content Include="Resources\talent_philosophies_of_ballad.png" />
+    <Content Include="Resources\talent_philosophies_of_diligence.png" />
+    <Content Include="Resources\talent_philosophies_of_freedom.png" />
+    <Content Include="Resources\talent_philosophies_of_gold.png" />
+    <Content Include="Resources\talent_philosophies_of_prosperity.png" />
+    <Content Include="Resources\talent_philosophies_of_resistance.png" />
+    <Content Include="Resources\talent_ring_of_boreas.png" />
+    <Content Include="Resources\talent_shadow_of_the_warrior.png" />
+    <Content Include="Resources\talent_shard_of_a_foul_legacy.png" />
+    <Content Include="Resources\talent_spirit_locket_of_boreas.png" />
+    <Content Include="Resources\talent_tail_of_boreas.png" />
+    <Content Include="Resources\talent_tusk_of_monoceros_caeli.png" />
+    <Content Include="Resources\task.png" />
+    <Content Include="Resources\theme.png" />
+    <Content Include="Resources\theme_white.png" />
+    <Content Include="Resources\timer.png" />
+    <Content Include="Resources\vibration.png" />
+    <Content Include="Resources\vibration_white.png" />
+    <Content Include="Resources\waypoint_domains.png" />
+    <Content Include="Resources\waypoint_spiral_abyss.png" />
+    <Content Include="Resources\waypoint_waypoint.png" />
+    <Content Include="Resources\weapon_amos_bow.png" />
+    <Content Include="Resources\weapon_aquila_favonia.png" />
+    <Content Include="Resources\weapon_lost_prayer_to_the_sacred_winds.png" />
+    <Content Include="Resources\weapon_memory_of_dust.png" />
+    <Content Include="Resources\weapon_primordial_jade_cutter.png" />
+    <Content Include="Resources\weapon_primordial_jade_winged_spear.png" />
+    <Content Include="Resources\weapon_skyward_atlas.png" />
+    <Content Include="Resources\weapon_skyward_blade.png" />
+    <Content Include="Resources\weapon_skyward_harp.png" />
+    <Content Include="Resources\weapon_skyward_pride.png" />
+    <Content Include="Resources\weapon_skyward_spine.png" />
+    <Content Include="Resources\weapon_staff_of_homa.png" />
+    <Content Include="Resources\weapon_summit_shaper.png" />
+    <Content Include="Resources\weapon_the_unforged.png" />
+    <Content Include="Resources\weapon_vortex_vanquisher.png" />
+    <Content Include="Resources\weapon_wolfs_gravestone.png" />
+    <Content Include="Resources\wish_acquaint_fate.png" />
+    <Content Include="Resources\wish_blessing_of_the_welkin_moon.png" />
+    <Content Include="Resources\wish_intertwined_fate.png" />
+    <Content Include="Resources\wish_primogem.png" />
+    <Content Include="Resources\x_mark.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+    <Page Include="MainPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FirebaseDatabase.net">
+      <Version>4.0.6</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications">
+      <Version>6.1.1</Version>
+    </PackageReference>
+    <PackageReference Include="Rg.Plugins.Popup">
+      <Version>2.0.0.10</Version>
+    </PackageReference>
+    <PackageReference Include="sqlite-net-pcl">
+      <Version>1.7.335</Version>
+    </PackageReference>
+    <PackageReference Include="Syncfusion.Xamarin.SfTreeView">
+      <Version>18.4.0.46</Version>
+    </PackageReference>
+    <PackageReference Include="Xam.Plugin.LatestVersion">
+      <Version>1.1.2</Version>
+    </PackageReference>
+    <PackageReference Include="Xamarin.Forms" Version="5.0.0.2012" />
+    <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform" Version="6.2.12" />
+    <PackageReference Include="Xamarin.Essentials" Version="1.6.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Genshin-Impact-Tasks\Genshin-Impact-Tasks.csproj">
+      <Project>{C25FE3F4-C9A9-4365-A41D-9E0BE545B18C}</Project>
+      <Name>Genshin-Impact-Tasks</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\.editorconfig">
+      <Link>.editorconfig</Link>
+    </None>
+    <None Include="Genshin-Impact-Tasks.UWP_TemporaryKey.pfx" />
+  </ItemGroup>
+  <ItemGroup />
+  <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
+    <VisualStudioVersion>14.0</VisualStudioVersion>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
+</Project>
