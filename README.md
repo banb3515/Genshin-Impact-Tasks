@@ -29,7 +29,7 @@
 > ### **시연 영상**
 >
 > -   Android 시연 영상  
->     [![Android 시연 영상](https://img.youtube.com/vi/2rMCJMG5Ohc/0.jpg)](https://youtu.be/jA1e0Q4-Ifs)
+>     [![Android 시연 영상](https://img.youtube.com/vi/jA1e0Q4-Ifs/0.jpg)](https://youtu.be/jA1e0Q4-Ifs)
 >
 > -   Windows 시연 영상  
 >     [![Android 시연 영상](https://img.youtube.com/vi/9BO8qXJdLRQ/0.jpg)](https://youtu.be/9BO8qXJdLRQ)
