@@ -4,7 +4,7 @@
 
 ---
 
-> ## **[Genshin Impact Tasks 로드맵](https://www.notion.so/banb/Genshin-Impact-Tasks-c16b2cfbf78941db8804e0cf4c01edd6)**
+> ## **[Genshin Impact Tasks 로드맵](https://banb.notion.site/Genshin-Impact-Tasks-8a3af1af194841d0a374033124299bee)**
 
 ---
 
