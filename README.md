@@ -1,6 +1,6 @@
 # **원신 태스크(Genshin Impact Tasks)**
 
-> ### **[Portfolio - Genshin-Impact-Tasks](http://banb.work/Portfolio/Genshin-Impact-Tasks)**
+> ### **[Project - Genshin-Impact-Tasks](http://banb.work/Project/Genshin-Impact-Tasks)**
 
 ---
 
